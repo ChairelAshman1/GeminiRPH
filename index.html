@@ -278,6 +278,51 @@
       return list.filter(name => days.some(d => name.toLowerCase().includes(d.toLowerCase())));
     };
 
+    const extractClassesFromSheetData = (values) => {
+      const classes = [];
+      const keywordRe = /^(kelas|class)\s*(?:\/)?.*[:]?/i;
+      for (let r = 0; r < values.length; r++) {
+        const row = values[r];
+        for (let c = 0; c < row.length; c++) {
+          const cell = (row[c] || '').toString().trim();
+          if (!cell) continue;
+          if (keywordRe.test(cell)) {
+            const side = (row[c+1] || '').toString().trim();
+            const className = side || cell.replace(keywordRe, '').trim() || ('Class ' + (classes.length + 1));
+            const existing = classes.find(x => x.name === className);
+            if (existing) break;
+
+            let tema = '';
+            let tajuk = '';
+            let sk = '';
+            let sp = '';
+            for (let rr = r + 1; rr < Math.min(r + 10, values.length); rr++) {
+              const rowBelow = values[rr];
+              for (let cc = 0; cc < rowBelow.length; cc++) {
+                const txt = (rowBelow[cc] || '').toString().trim().toLowerCase();
+                if (txt.includes('tema')) tema = (rowBelow[cc+1] || '').toString().trim();
+                if (txt.includes('tajuk')) tajuk = (rowBelow[cc+1] || '').toString().trim();
+                if (txt.includes('standard kandungan')) sk = (rowBelow[cc+1] || '').toString().trim();
+                if (txt.includes('standard pembelajaran')) sp = (rowBelow[cc+1] || '').toString().trim();
+              }
+            }
+
+            classes.push({
+              id: classes.length,
+              name: className,
+              tema: tema,
+              tajuk: tajuk,
+              sk: sk,
+              sp: sp,
+              selected: false
+            });
+            break;
+          }
+        }
+      }
+      return classes;
+    };
+
     const renderDayButtons = () => {
       const container = $('dayButtons');
       container.innerHTML='';
@@ -300,11 +345,19 @@
       showStatus(`Sheet hari dipilih: ${sheetName}`, 'success');
       setLoading(true, 'Memuat data kelas...');
       try {
-        const readResp = await apiGet({ action:'read', sheetId: state.sheetId, sheetName, range:'A2:A200' });
+        const readResp = await apiGet({ action:'read', sheetId: state.sheetId, sheetName, range:'A1:Z300' });
         if (readResp.status !== 'ok') throw new Error(readResp.message || 'Gagal baca');
 
-        const flat = (readResp.values || []).map(row => (row[0] || '').toString().trim()).filter(Boolean);
-        state.classItems = flat.map((cls, idx) => ({ id: idx, name: cls, selected: false }));
+        const values = readResp.values || [];
+        const parsedClasses = extractClassesFromSheetData(values);
+
+        if (parsedClasses.length) {
+          state.classItems = parsedClasses;
+        } else {
+          const fallback = values.map(row => (row[0] || '').toString().trim()).filter(Boolean);
+          state.classItems = fallback.map((cls, idx) => ({ id: idx, name: cls, tema: '', tajuk: '', sk: '', sp: '', selected: false }));
+        }
+
         renderClassList();
 
       } catch (err) {
@@ -328,7 +381,19 @@
 
       const listHtml = state.classItems.map(item => {
         const checked = item.selected ? 'checked' : '';
-        return `<div class='list-item'><input type='checkbox' data-id='${item.id}' ${checked} /><label>${item.name}</label></div>`;
+        return `
+          <div class='list-item' style='flex-direction:column; align-items:flex-start;'>
+            <div style='width:100%; display:flex; align-items:center; gap:0.5rem;'>
+              <input type='checkbox' data-id='${item.id}' ${checked} />
+              <strong>${item.name}</strong>
+            </div>
+            <div style='margin-left:23px; font-size:0.82rem; color:#94a3b8;'>
+              ${item.tema ? 'Tema: ' + item.tema + '<br/>' : ''}
+              ${item.tajuk ? 'Tajuk: ' + item.tajuk + '<br/>' : ''}
+              ${item.sk ? 'Standard Kandungan: ' + item.sk + '<br/>' : ''}
+              ${item.sp ? 'Standard Pembelajaran: ' + item.sp + '<br/>' : ''}
+            </div>
+          </div>`;
       }).join('');
       container.innerHTML = listHtml;
 
@@ -393,8 +458,20 @@
 
       setLoading(true, 'Menjana RPH...');
       showStatus('Mencuba menjana RPH menggunakan Google AI Studio...', 'info');
-      const classNames = selected.map(x => x.name).join(', ');
-      const basePrompt = `Sediakan RPH untuk setiap kelas berikut: ${classNames}. Jelaskan dalam format JSON array: [{className, objektif, kriteria, aktiviti}].`;
+
+      const classLines = selected.map(cls => {
+        const details = [];
+        if (cls.tema) details.push('Tema: ' + cls.tema);
+        if (cls.tajuk) details.push('Tajuk: ' + cls.tajuk);
+        if (cls.sk) details.push('SK: ' + cls.sk);
+        if (cls.sp) details.push('SP: ' + cls.sp);
+        return `Kelas: ${cls.name}${details.length ? ' (' + details.join(' | ') + ')' : ''}`;
+      }).join('\n');
+
+      const basePrompt = `Sediakan RPH bagi kelas berikut dengan objektif pembelajaran, kriteria kejayaan, dan aktiviti:
+${classLines}
+
+Format jawapan: JSON array objek dengan medan className, objektif, kriteria, aktiviti.`;
 
       let resolved = false;
       let lastError = null;
@@ -411,12 +488,15 @@
           }
 
           if (Array.isArray(parsed) && parsed.length) {
-            state.generated = parsed.map(item => ({
-              className: item.className || item.kelas || '',
-              objektif: item.objektif || item.objective || '',
-              kriteria: item.kriteria || item.criteria || '',
-              aktiviti: item.aktiviti || item.activity || ''
-            }));
+            state.generated = parsed.map(item => {
+              const source = selected.find(c => (c.name || '').toLowerCase() === (item.className || item.kelas || '').toString().toLowerCase()) || {};
+              return {
+                className: item.className || item.kelas || source.name || 'Kelas',
+                objektif: item.objektif || item.objective || source.objektif || 'Objektif dibuat secara automatik.',
+                kriteria: item.kriteria || item.criteria || source.kriteria || 'Kriteria kejayaan dibuat secara automatik.',
+                aktiviti: item.aktiviti || item.activity || source.aktiviti || 'Aktiviti dibuat secara automatik.'
+              };
+            });
             selectedApiKey = key;
             $('apiKey').value = key;
             showStatus('RPH berjaya dijana dengan API key terpilih.', 'success');
@@ -436,9 +516,9 @@
       if (!resolved) {
         state.generated = selected.map(cls => ({
           className: cls.name,
-          objektif: `Objektif: Mencapai pembelajaran ${cls.name}`,
-          kriteria: `Kriteria Kejayaan: Pelajar mampu menerangkan ${cls.name}`,
-          aktiviti: `Aktiviti: Latihan, perbincangan dan refleksi ${cls.name}`
+          objektif: cls.objektif || `Objektif: Mencapai pembelajaran ${cls.name}`,
+          kriteria: cls.kriteria || `Kriteria Kejayaan: Pelajar mampu menerangkan ${cls.name}`,
+          aktiviti: cls.aktiviti || `Aktiviti: Latihan, perbincangan dan refleksi ${cls.name}`
         }));
         showStatus('Semua key gagal. Gunakan fallback automatik. ' + (lastError ? lastError.message : ''), 'error');
       }
