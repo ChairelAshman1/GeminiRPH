@@ -857,6 +857,12 @@
             </p>
             <button id="btnShowHelp" class="api-help-btn">Panduan</button>
         </div>
+
+        <div style="margin-top:0.65rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+            <button id="btnSyncApiKey" class="btn-secondary bg-indigo" style="font-size:0.7rem; padding:3px 8px;">Simpan API Key ke Google Sheet</button>
+            <button id="btnLoadApiKeys" class="btn-secondary bg-slate" style="font-size:0.7rem; padding:3px 8px;">Muatkan API Key dari Sheet</button>
+            <span id="apiKeyRemoteStatus" style="font-size:0.65rem; color:#94a3b8;">(cek server untuk cross-device sync)</span>
+        </div>
     </div>
 
     <div class="tabs">
@@ -1049,6 +1055,19 @@
         
         <!-- TAB 2: DATA & RUJUKAN -->
         <div id="tab-data" class="tab-content">
+            <div class="section" style="border:1px dashed #64748b; padding:0.7rem; margin-bottom:0.6rem;">
+                <div class="section-header">
+                    <label>Jadual Harian (Ahad-Isnin-Selasa...)</label>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+                    <input type="text" id="scheduleSheetName" placeholder="Nama Sheet Jadual (contoh: Jadual)" style="width:100%;">
+                    <button id="btnLoadSchedule" class="btn-secondary bg-blue" style="padding: 0.5rem;">Muatkan Jadual</button>
+                    <button id="btnClearSchedule" class="btn-secondary bg-red" style="padding: 0.5rem;">Kosongkan Paparan</button>
+                </div>
+                <div id="dayButtonsContainer" style="margin-top:0.5rem; display:flex; gap:0.35rem; flex-wrap:wrap;"></div>
+                <div id="dayClassesDisplay" style="margin-top:0.5rem; border:1px solid rgba(148,163,184,0.25); border-radius:6px; padding:0.5rem; background:rgba(15,23,42,0.5); max-height:220px; overflow:auto;"></div>
+            </div>
+
             <div class="section">
                 <div class="section-header">
                     <label>Muat Naik Fail</label>
