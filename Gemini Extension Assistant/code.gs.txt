@@ -534,6 +534,16 @@ function doGet(e) {
     case 'getSchedule':
       return handleGetSchedule(e);
 
+    case '':
+      // fallback path: if sheetId is provided, return sheet names
+      if (e.parameter.sheetId) {
+        return handleListSheets(e);
+      }
+      // else keep ping behavior
+      return ContentService
+          .createTextOutput(JSON.stringify({ status: 'ok', message: 'alive' }))
+          .setMimeType(ContentService.MimeType.JSON);
+
     default:
       return ContentService
           .createTextOutput(JSON.stringify({ status: 'error', message: 'Unsupported action' }))

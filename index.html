@@ -51,6 +51,11 @@
     <div class="row">
       <button id="btnConnect" class="small-btn">Sambung Spreadsheet</button>
       <button id="btnReload" class="small-btn">Refresh Harian</button>
+      <button id="btnSaveConfig" class="small-btn" style="background:#10b981;">💾 Simpan Web App/Sheet</button>
+    </div>
+
+    <div class="flex-right" style="margin-top:0.45rem; gap:0.45rem;">
+      <button id="btnLoading" class="small-btn hide" disabled style="background:#64748b;">⏳ Loading...</button>
     </div>
 
     <div id="status" class="msg">Sila masukkan URL dan sambung.</div>
@@ -79,6 +84,8 @@
 
   <script>
     const STORAGE_API_KEYS = 'gemini_rph_api_keys';
+    const STORAGE_SCRIPT_URL = 'gemini_rph_script_url';
+    const STORAGE_SHEET_URL = 'gemini_rph_sheet_url';
     let selectedApiKey = '';
 
     const state = {
@@ -189,13 +196,55 @@
       else el.style.color = '#cbd5e1';
     };
 
+    const setLoading = (isLoading, loadingText = 'Sedang memproses...') => {
+      const btn = $('btnLoading');
+      if (isLoading) {
+        btn.classList.remove('hide');
+        btn.disabled = true;
+        btn.textContent = '⏳ ' + loadingText;
+      } else {
+        btn.classList.add('hide');
+        btn.disabled = false;
+        btn.textContent = '⏳ Loading...';
+      }
+    };
+
     const getApiUrl = () => {
       let url = $('scriptUrl').value.trim();
       if (!url) {
         showStatus('Sila masukkan Apps Script URL.', 'error');
         return null;
       }
-      return url.replace(/\/+$/,'');
+      url = url.replace(/\/+$/,'');
+      localStorage.setItem(STORAGE_SCRIPT_URL, url);
+      return url;
+    };
+
+    const saveSheetUrl = (url) => {
+      if (!url) return;
+      localStorage.setItem(STORAGE_SHEET_URL, url);
+    };
+
+    const loadSettings = () => {
+      const scriptUrl = localStorage.getItem(STORAGE_SCRIPT_URL) || '';
+      if (scriptUrl) $('scriptUrl').value = scriptUrl;
+      const sheetUrl = localStorage.getItem(STORAGE_SHEET_URL) || '';
+      if (sheetUrl) $('sheetUrl').value = sheetUrl;
+
+      const apiKey = localStorage.getItem('gemini_rph_last_key') || '';
+      if (apiKey) {
+        selectedApiKey = apiKey;
+        $('apiKey').value = apiKey;
+      }
+      renderApiKeyList();
+    };
+
+    const saveSettings = () => {
+      const scriptUrl = $('scriptUrl').value.trim();
+      const sheetUrl = $('sheetUrl').value.trim();
+      if (scriptUrl) localStorage.setItem(STORAGE_SCRIPT_URL, scriptUrl.replace(/\/+$/,''));
+      if (sheetUrl) localStorage.setItem(STORAGE_SHEET_URL, sheetUrl);
+      showStatus('Tetapan disimpan (Web App + Spreadsheet).', 'success');
     };
 
     async function apiGet(params) {
@@ -240,6 +289,7 @@
       state.selectedDaySheet = sheetName;
       renderDayButtons();
       showStatus(`Sheet hari dipilih: ${sheetName}`, 'success');
+      setLoading(true, 'Memuat data kelas...');
       try {
         const readResp = await apiGet({ action:'read', sheetId: state.sheetId, sheetName, range:'A2:A200' });
         if (readResp.status !== 'ok') throw new Error(readResp.message || 'Gagal baca');
@@ -250,6 +300,8 @@
 
       } catch (err) {
         showStatus('Error baca kelas: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -330,6 +382,7 @@
         return;
       }
 
+      setLoading(true, 'Menjana RPH...');
       showStatus('Mencuba menjana RPH menggunakan Google AI Studio...', 'info');
       const classNames = selected.map(x => x.name).join(', ');
       const basePrompt = `Sediakan RPH untuk setiap kelas berikut: ${classNames}. Jelaskan dalam format JSON array: [{className, objektif, kriteria, aktiviti}].`;
@@ -382,6 +435,7 @@
       }
 
       renderGenerated();
+      setLoading(false);
     };
 
     const renderGenerated = () => {
@@ -418,6 +472,7 @@
         return;
       }
 
+      setLoading(true, 'Mengisi RPH ke Spreadsheet...');
       try {
         const payload = {
           action: 'appendRPH',
@@ -434,6 +489,8 @@
         }
       } catch (err) {
         showStatus('Error tulis ke sheet: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -446,6 +503,7 @@
       }
       state.sheetId = sheetId;
 
+      setLoading(true, 'Menyambung ke spreadsheet...');
       try {
         const data = await apiGet({ action:'listSheets', sheetId });
         if (data.status !== 'ok') throw new Error(data.message || 'Gagal terima list');
@@ -463,14 +521,17 @@
         showStatus(`Berjaya sambung. Ditemui ${dayList.length} sheet hari.` ,'success');
       } catch (err) {
         showStatus('Gagal sambung: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
       }
     });
 
-    // Load saved API key list on startup
-    renderApiKeyList();
+    // Load saved settings and API key list on startup
+    loadSettings();
 
     $('btnSaveApiKey').addEventListener('click', addApiKey);
     $('btnReload').addEventListener('click', async () => $('btnConnect').click());
+    $('btnSaveConfig').addEventListener('click', saveSettings);
     $('btnGenerate').addEventListener('click', generateRPH);
     $('btnFill').addEventListener('click', fillRPH);
   </script>
