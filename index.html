@@ -93,8 +93,7 @@
       selectedDaySheet: null,
       daySheets: [],
       classItems: [],
-      generated: []
-    };
+    selectedClassId: null,
 
     const $ = id => document.getElementById(id);
 
@@ -280,41 +279,46 @@
 
     const extractClassesFromSheetData = (values) => {
       const classes = [];
-      const keywordRe = /^(kelas|class)\s*(?:\/)?.*[:]?/i;
+      const keywordRe = /^(kelas|class)(?:\s*[:\/]\s*)?(.*)$/i;
       for (let r = 0; r < values.length; r++) {
         const row = values[r];
         for (let c = 0; c < row.length; c++) {
           const cell = (row[c] || '').toString().trim();
           if (!cell) continue;
-          if (keywordRe.test(cell)) {
-            const side = (row[c+1] || '').toString().trim();
-            const className = side || cell.replace(keywordRe, '').trim() || ('Class ' + (classes.length + 1));
-            const existing = classes.find(x => x.name === className);
-            if (existing) break;
+          const match = cell.match(keywordRe);
+          if (match) {
+            const className = (match[2] || (row[c+1] || '').toString().trim() || '').trim() || ('Class ' + (classes.length + 1));
+            if (!className) continue;
+            if (classes.some(x => x.name === className)) break;
 
+            let bidang = '';
             let tema = '';
             let tajuk = '';
             let sk = '';
             let sp = '';
-            for (let rr = r + 1; rr < Math.min(r + 10, values.length); rr++) {
-              const rowBelow = values[rr];
-              for (let cc = 0; cc < rowBelow.length; cc++) {
-                const txt = (rowBelow[cc] || '').toString().trim().toLowerCase();
-                if (txt.includes('tema')) tema = (rowBelow[cc+1] || '').toString().trim();
-                if (txt.includes('tajuk')) tajuk = (rowBelow[cc+1] || '').toString().trim();
-                if (txt.includes('standard kandungan')) sk = (rowBelow[cc+1] || '').toString().trim();
-                if (txt.includes('standard pembelajaran')) sp = (rowBelow[cc+1] || '').toString().trim();
+
+            for (let rr = r + 1; rr < Math.min(r + 18, values.length); rr++) {
+              const below = values[rr];
+              for (let cc = 0; cc < below.length; cc++) {
+                const txt = (below[cc] || '').toString().trim().toLowerCase();
+                const nextCell = (below[cc+1] || '').toString().trim();
+                if (!txt) continue;
+                if (txt.includes('bidang')) bidang = nextCell || bidang;
+                if (txt.includes('tema')) tema = nextCell || tema;
+                if (txt.includes('tajuk')) tajuk = nextCell || tajuk;
+                if (txt.includes('standard kandungan')) sk = nextCell || sk;
+                if (txt.includes('standard pembelajaran')) sp = nextCell || sp;
               }
             }
 
             classes.push({
               id: classes.length,
               name: className,
+              bidang: bidang,
               tema: tema,
               tajuk: tajuk,
               sk: sk,
-              sp: sp,
-              selected: false
+              sp: sp
             });
             break;
           }
@@ -379,39 +383,54 @@
         return;
       }
 
-      const listHtml = state.classItems.map(item => {
-        const checked = item.selected ? 'checked' : '';
-        return `
-          <div class='list-item' style='flex-direction:column; align-items:flex-start;'>
-            <div style='width:100%; display:flex; align-items:center; gap:0.5rem;'>
-              <input type='checkbox' data-id='${item.id}' ${checked} />
-              <strong>${item.name}</strong>
-            </div>
-            <div style='margin-left:23px; font-size:0.82rem; color:#94a3b8;'>
-              ${item.tema ? 'Tema: ' + item.tema + '<br/>' : ''}
-              ${item.tajuk ? 'Tajuk: ' + item.tajuk + '<br/>' : ''}
-              ${item.sk ? 'Standard Kandungan: ' + item.sk + '<br/>' : ''}
-              ${item.sp ? 'Standard Pembelajaran: ' + item.sp + '<br/>' : ''}
-            </div>
-          </div>`;
-      }).join('');
-      container.innerHTML = listHtml;
+      if (state.selectedClassId === null) {
+        state.selectedClassId = state.classItems[0].id;
+      }
 
-      container.querySelectorAll('input[type=checkbox]').forEach(el => {
-        el.addEventListener('change', (e) => {
-          const id = Number(e.target.dataset.id);
-          const found = state.classItems.find(x => x.id === id);
-          if (found) found.selected = e.target.checked;
-          $('classCount').textContent = `${state.classItems.filter(x=>x.selected).length} dipilih`;
-          const any = state.classItems.some(x=>x.selected);
-          if (any) $('actionPanel').classList.remove('hide');
-          else $('actionPanel').classList.add('hide');
-        });
+      const selectHtml = `
+        <div style='margin-bottom:0.6rem;'>
+          <label for='classSelect' style='color:#94a3b8;'>Pilih Kelas (1 sahaja):</label>
+          <select id='classSelect'>
+            ${state.classItems.map(item => `<option value='${item.id}' ${item.id === state.selectedClassId ? 'selected' : ''}>${item.name}</option>`).join('')}
+          </select>
+        </div>
+      `;
+
+      const detailHtml = `
+        <div style='display:grid; grid-template-columns:1fr; gap:0.45rem; text-align:left;'>
+          <div><strong>Bidang:</strong><br><input id='fieldBidang' value='${(state.classItems.find(i=>i.id===state.selectedClassId)||{}).bidang||''}' /></div>
+          <div><strong>Tema:</strong><br><input id='fieldTema' value='${(state.classItems.find(i=>i.id===state.selectedClassId)||{}).tema||''}' /></div>
+          <div><strong>Tajuk:</strong><br><input id='fieldTajuk' value='${(state.classItems.find(i=>i.id===state.selectedClassId)||{}).tajuk||''}' /></div>
+          <div><strong>Standard Kandungan:</strong><br><input id='fieldSK' value='${(state.classItems.find(i=>i.id===state.selectedClassId)||{}).sk||''}' /></div>
+          <div><strong>Standard Pembelajaran:</strong><br><input id='fieldSP' value='${(state.classItems.find(i=>i.id===state.selectedClassId)||{}).sp||''}' /></div>
+        </div>
+      `;
+
+      container.innerHTML = selectHtml + detailHtml;
+
+      const classSelect = $('classSelect');
+      classSelect.addEventListener('change', () => {
+        state.selectedClassId = Number(classSelect.value);
+        renderClassList();
       });
 
-      $('classCount').textContent = `${state.classItems.length} kelas`; 
+      const syncField = (fieldKey, inputId) => {
+        const input = $(inputId);
+        input.addEventListener('input', () => {
+          const selected = state.classItems.find(i => i.id === state.selectedClassId);
+          if (selected) { selected[fieldKey] = input.value.trim(); }
+        });
+      };
+
+      syncField('bidang', 'fieldBidang');
+      syncField('tema', 'fieldTema');
+      syncField('tajuk', 'fieldTajuk');
+      syncField('sk', 'fieldSK');
+      syncField('sp', 'fieldSP');
+
+      $('classCount').textContent = '1 kelas terpilih';
       p.classList.remove('hide');
-      $('actionPanel').classList.add('hide');
+      $('actionPanel').classList.remove('hide');
       $('resultPanel').classList.add('hide');
     };
 
@@ -444,9 +463,9 @@
     }
 
     const generateRPH = async () => {
-      const selected = state.classItems.filter(x => x.selected);
+      const selected = state.classItems.filter(x => x.id === state.selectedClassId);
       if (!selected.length) {
-        showStatus('Pilih sekurang-kurangnya satu kelas.', 'error');
+        showStatus('Pilih satu kelas dari dropdown.', 'error');
         return;
       }
 
