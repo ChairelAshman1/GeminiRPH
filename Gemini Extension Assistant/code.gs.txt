@@ -1,0 +1,618 @@
+function eRPHKPM_TS25() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('E4').activate();
+}
+
+function eRPHV7Liteeee() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+
+// ShowRows KRETERIA KEJAYAAN
+spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('119:121').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('150:152').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('181:183').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('212:214').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('243:245').activate();
+  spreadsheet.getActiveSheet().showRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function eRPHV7Lite() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+
+// HIDE SKSP
+spreadsheet.getRange('12:20').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('43:51').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('74:82').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('105:113').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('136:144').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('167:175').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('198:206').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+spreadsheet.getRange('229:237').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+}
+
+
+function RPH_0() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('7:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_1() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+ 
+  spreadsheet.getRange('37:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_2() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+  spreadsheet.getRange('68:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_3() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(),
+  spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+  spreadsheet.getRange('99:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_4() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(),
+  spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('119:121').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+  spreadsheet.getRange('130:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_5() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(),
+  spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('119:121').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('150:152').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+  spreadsheet.getRange('161:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_6() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(),
+  spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('119:121').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('150:152').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('181:183').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+  spreadsheet.getRange('192:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+
+}
+
+function RPH_7() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(),
+  spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('119:121').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('150:152').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('181:183').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('212:214').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+
+  spreadsheet.getRange('223:254').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function RPH_8() {
+  SpreadsheetApp.getUi()
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('6:254').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(7, 254);
+  spreadsheet.getRange('26:28').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('57:59').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(),
+  spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('88:90').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('119:121').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('150:152').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('181:183').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('212:214').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows()); 
+  spreadsheet.getRange('243:245').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E7').activate();
+}
+
+function KANAN() {
+  SpreadsheetApp.getUi() // RPH JAWI/ARAB
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('A:A').activate();
+  spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+  spreadsheet.getRange('L:L').activate();
+  spreadsheet.getActiveSheet().showColumns(12);
+  spreadsheet.getRange('B7:K254').activate();
+  spreadsheet.getActiveRangeList().setHorizontalAlignment('right');
+  spreadsheet.getRange('E7').activate();
+  }
+
+function KIRI() {
+  SpreadsheetApp.getUi() // RPH BM/BI
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('L:L').activate();
+  spreadsheet.getActiveSheet().hideColumns(spreadsheet.getActiveRange().getColumn(), spreadsheet.getActiveRange().getNumColumns());
+  spreadsheet.getRange('A:A').activate();
+  spreadsheet.getActiveSheet().showColumns(1);
+  spreadsheet.getRange('B7:K254').activate();
+  spreadsheet.getActiveRangeList().setHorizontalAlignment('left');
+  spreadsheet.getRange('E7').activate();
+};
+
+
+function PadamRPH() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRangeList([
+  // RPH1
+  'B9:J11','B13:J20','B22:J31','B32:B36','D32:D36','E36',
+  // RPH2
+ 'B40:J42','B44:J51','B53:J62','B63:B67','D63:D67','E67',
+  // RPH3
+ 'B71:J73','B75:J82','B84:J93','B94:B98','D94:D98','E98',
+  // RPH4
+ 'B102:J104','B106:J113','B115:J124','B125:B129','D125:D129','E129',
+  // RPH5
+  'B133:J135','B137:J144','B146:J155','B156:B160','D156:D160','E160',
+  // RPH6
+  'B164:J166','B168:J175','B177:J186','B187:B191','D187:D191','E191',
+  // RPH7
+  'B195:J197','B199:J206','B208:J217','B218:B222','D218:D222','E222',
+  // RPH8
+ 'B226:J228','B230:J237','B239:J248','B249:B253','D249:D253','E253',
+  ]).activate() 
+  .clear({contentsOnly: true, skipFilteredRows: true});
+  spreadsheet.getRange('E7').activate();
+};
+
+function PadamRpt() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRangeList([
+  'D10:F154','D158:F302','D306:F450','D454:F598','D602:F746','D750:F894','D898:F1042','D1046:F1190','D1194:F1338','D1342:F1486',
+  'D1490:F1634','D1638:F1782','D1786:F1930','D1934:F2078','D2082:F2226','D2230:F2374','D2378:F2522','D2526:F2670','D2674:F2818','D2822:F2966',
+
+  ]).activate() 
+  .clear({contentsOnly: true, skipFilteredRows: true});
+  spreadsheet.getRange('E7').activate();
+};
+  
+function bantuan(){
+  Browser.msgBox("Pilih Bil RPH, PADAM RPH DAN ARAH RPH= klik butang SETTING eRPH VERSI7.0");
+}
+
+
+function RPT_1() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('156:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_2() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('304:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_3() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('452:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+  function RPT_4() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('600:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_5() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('748:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_6() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('896:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_7() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1044:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_8() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1192:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_9() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1340:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_10() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1488:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_11() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1636:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_12() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1784:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_13() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('1932:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_14() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2080:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_15() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2228:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_16() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2376:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_17() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2524:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_18() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2672:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_19() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2820:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+function RPT_20() {
+  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
+  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet.getRange('10:2967').activate();
+  spreadsheet.setCurrentCell(spreadsheet.getRange('A4'));
+  spreadsheet.getActiveSheet().showRows(8, 2967);
+  spreadsheet.getRange('2967:2967').activate();
+  spreadsheet.getActiveSheet().hideRows(spreadsheet.getActiveRange().getRow(), spreadsheet.getActiveRange().getNumRows());
+  spreadsheet.getRange('E8').activate();
+}
+
+/**
+ * Web App API helpers for website integration
+ */
+function doGet(e) {
+  var action = (e.parameter.action || 'ping').toLowerCase();
+  switch(action) {
+    case 'ping':
+      return ContentService
+          .createTextOutput(JSON.stringify({ status: 'ok', message: 'alive' }))
+          .setMimeType(ContentService.MimeType.JSON);
+
+    case 'read':
+      return handleReadRequest(e);
+
+    default:
+      return ContentService
+          .createTextOutput(JSON.stringify({ status: 'error', message: 'Unsupported action' }))
+          .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  var data;
+  try {
+    data = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid JSON body: ' + err } ))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var action = (data.action || '').toLowerCase();
+  if (action === 'write') {
+    return handleWriteRequest(data);
+  }
+
+  return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Unsupported POST action' }))
+      .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleReadRequest(e) {
+  var sheetId = e.parameter.sheetId || '';
+  var sheetName = e.parameter.sheetName || 'Sheet1';
+  var range = e.parameter.range || 'A1:Z50';
+
+  var sheet = getSheetInstance(sheetId, sheetName);
+  if (!sheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet tidak ditemui.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var values = sheet.getRange(range).getValues();
+  return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', values: values }))
+      .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleWriteRequest(data) {
+  var sheetId = data.sheetId || '';
+  var sheetName = data.sheetName || 'Sheet1';
+  var range = data.range || 'A2';
+  var payload = data.data || {};
+
+  var sheet = getSheetInstance(sheetId, sheetName);
+  if (!sheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet tidak ditemui.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var values = [
+    payload.timestamp || '',
+    payload.objektif || '',
+    payload.kriteria || '',
+    payload.aktiviti || ''
+  ];
+
+  try {
+    var target = sheet.getRange(range).offset(0, 0, 1, values.length);
+    target.setValues([values]);
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', message: 'Data ditulis.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Gagal menulis: ' + err }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getSheetInstance(sheetId, sheetName) {
+  var ss;
+  try {
+    if (sheetId && sheetId.length > 10) {
+      ss = SpreadsheetApp.openById(sheetId);
+    } else {
+      ss = SpreadsheetApp.getActiveSpreadsheet();
+    }
+    return ss.getSheetByName(sheetName) || ss.getSheets()[0];
+  } catch (e) {
+    return null;
+  }
+}
