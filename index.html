@@ -434,7 +434,19 @@
       container.innerHTML = selectHtml + detailHtml;
 
       const classSelect = $('classSelect');
+
+      const saveCurrentClassFields = () => {
+        const selected = state.classItems.find(i => i.id === state.selectedClassId);
+        if (!selected) return;
+        selected.bidang = $('fieldBidang').value.trim();
+        selected.tema = $('fieldTema').value.trim();
+        selected.tajuk = $('fieldTajuk').value.trim();
+        selected.sk = $('fieldSK').value.trim();
+        selected.sp = $('fieldSP').value.trim();
+      };
+
       classSelect.addEventListener('change', () => {
+        saveCurrentClassFields();
         state.selectedClassId = Number(classSelect.value);
         renderClassList();
       });
