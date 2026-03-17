@@ -38,11 +38,12 @@
     <label for="scriptUrl">Apps Script URL (Web App Exec):</label>
     <input id="scriptUrl" placeholder="https://script.google.com/macros/s/XXX/exec" value="" />
 
-    <label for="apiKey">OpenAI API Key:</label>
+    <label for="apiKey">Google AI Studio API Keys (satu atau lebih):</label>
     <div class="row">
-      <input id="apiKey" type="password" placeholder="sk-..." style="flex: 1;" />
-      <button id="btnSaveApiKey" class="small-btn">Simpan API Key</button>
+      <input id="apiKey" type="password" placeholder="AIza... atau sk-..." style="flex: 1;" />
+      <button id="btnSaveApiKey" class="small-btn">Tambah & Simpan</button>
     </div>
+    <div id="apiKeyList" style="margin-top:0.5rem;"></div>
 
     <label for="sheetUrl">Google Spreadsheet URL:</label>
     <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/xxx/edit" />
@@ -77,7 +78,8 @@
   </div>
 
   <script>
-    const STORAGE_API_KEY = 'gemini_rph_api_key';
+    const STORAGE_API_KEYS = 'gemini_rph_api_keys';
+    let selectedApiKey = '';
 
     const state = {
       sheetId: '',
@@ -89,28 +91,87 @@
 
     const $ = id => document.getElementById(id);
 
-    const loadSavedApiKey = () => {
-      const stored = localStorage.getItem(STORAGE_API_KEY);
-      if (stored) {
-        $('apiKey').value = stored;
-        showStatus('OpenAI API Key dimuatkan dari sistem.', 'success');
+    const getStoredApiKeys = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_API_KEYS);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) {
+        return [];
       }
     };
 
-    const saveApiKey = () => {
-      const key = $('apiKey').value.trim();
-      if (!key || !key.startsWith('sk-')) {
-        showStatus('Sila masukkan OpenAI API key sah bermula dengan sk-.', 'error');
+    const persistApiKeys = (keys) => {
+      localStorage.setItem(STORAGE_API_KEYS, JSON.stringify(keys));
+    };
+
+    const renderApiKeyList = () => {
+      const container = $('apiKeyList');
+      const keys = getStoredApiKeys();
+      if (!keys.length) {
+        container.innerHTML = '<div style="font-size:0.85rem;color:#94a3b8;">Tiada API Key disimpan.</div>';
         return;
       }
-      localStorage.setItem(STORAGE_API_KEY, key);
-      showStatus('OpenAI API Key disimpan selama-lamanya (sehingga dipadam).', 'success');
+      container.innerHTML = keys.map((key, index) => {
+        const short = key.length > 8 ? key.slice(0, 6) + '...' + key.slice(-4) : key;
+        const isActive = key === selectedApiKey;
+        return `
+          <div style="display:flex; align-items:center; gap:0.45rem; margin-bottom:0.35rem;">
+            <button class="pill ${isActive ? 'active' : ''}" style="padding:0.25rem 0.45rem; border-radius:0.35rem;" data-key="${key}" type="button">${short}</button>
+            <button class="small-btn" style="background:#dc2626;">Padam</button>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedApiKey = btn.dataset.key;
+          $('apiKey').value = selectedApiKey;
+          renderApiKeyList();
+          showStatus('API Key dipilih: ' + (btn.textContent || '').toString(), 'success');
+        });
+      });
+
+      container.querySelectorAll('.small-btn').forEach((btn, i) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const keys = getStoredApiKeys();
+          const removed = keys.splice(i, 1)[0];
+          persistApiKeys(keys);
+          if (removed === selectedApiKey) {
+            selectedApiKey = keys[0] || '';
+            $('apiKey').value = selectedApiKey;
+          }
+          renderApiKeyList();
+          showStatus('API Key dipadam.', 'info');
+        });
+      });
     };
 
-    const getApiKey = () => {
-      const key = $('apiKey').value.trim() || localStorage.getItem(STORAGE_API_KEY) || '';
-      if (key) localStorage.setItem(STORAGE_API_KEY, key);
-      return key;
+    const addApiKey = () => {
+      const key = $('apiKey').value.trim();
+      if (!key) { showStatus('Sila masukkan API key.', 'error'); return; }
+      if (!(key.startsWith('AIza') || key.startsWith('sk-')|| key.length >= 20)) {
+        showStatus('Key nampak tidak sah. Masukkan key Google AI Studio atau OpenAI.', 'error');
+        return;
+      }
+      const keys = getStoredApiKeys();
+      if (keys.includes(key)) {
+        showStatus('Key sudah wujud dalam sistem.', 'info');
+        return;
+      }
+      keys.push(key);
+      persistApiKeys(keys);
+      selectedApiKey = key;
+      renderApiKeyList();
+      showStatus('Key ditambah. Pilih satu untuk digunakan.', 'success');
+    };
+
+    const getActiveApiKey = () => {
+      const keys = getStoredApiKeys();
+      if (selectedApiKey && keys.includes(selectedApiKey)) return selectedApiKey;
+      if (keys.length > 0) return keys[0];
+      return '';
     };
 
     const getSheetId = (url) => {
@@ -228,91 +289,96 @@
       $('resultPanel').classList.add('hide');
     };
 
+    async function callGoogleAI(promptText, key) {
+      const url = 'https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generate';
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: JSON.stringify({
+          prompt: { text: promptText },
+          temperature: 0.85,
+          candidateCount: 1,
+          maxOutputTokens: 600
+        })
+      });
+
+      const body = await resp.json();
+      if (!resp.ok) {
+        const err = body.error && body.error.message ? body.error.message : ('HTTP ' + resp.status);
+        throw new Error(err);
+      }
+
+      if (!body.candidates || !body.candidates.length || !body.candidates[0].output) {
+        throw new Error('Tiada output dari API AI (tiada candidates).');
+      }
+      return body.candidates[0].output;
+    }
+
     const generateRPH = async () => {
-      const selected = state.classItems.filter(x=>x.selected);
+      const selected = state.classItems.filter(x => x.selected);
       if (!selected.length) {
         showStatus('Pilih sekurang-kurangnya satu kelas.', 'error');
         return;
       }
 
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        showStatus('Sila simpan OpenAI API Key terlebih dahulu.', 'error');
+      const keys = getStoredApiKeys();
+      if (!keys.length) {
+        showStatus('Sila tambah sekurang-kurangnya satu Google AI Studio API key.', 'error');
         return;
       }
 
-      showStatus('Hubungi OpenAI untuk menjana RPH...', 'info');
-      const classNames = selected.map(x=>x.name).join(', ');
-      const prompt = `Sediakan RPH untuk setiap kelas berikut. Jawab dalam format JSON array dengan objek yang mengandungi className, objektif, kriteria, aktiviti.  Berikan 1 objektif, 1 kriteria kejayaan dan 1 aktiviti ringkas untuk setiap kelas.`;
+      showStatus('Mencuba menjana RPH menggunakan Google AI Studio...', 'info');
+      const classNames = selected.map(x => x.name).join(', ');
+      const basePrompt = `Sediakan RPH untuk setiap kelas berikut: ${classNames}. Jelaskan dalam format JSON array: [{className, objektif, kriteria, aktiviti}].`;
 
-      try {
-        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: 'Anda adalah pembantu guru yang menyusun RPH dalam Bahasa Melayu ringkas dan terstruktur.' },
-              { role: 'user', content: `Kelas: ${classNames}. ${prompt}` }
-            ],
-            temperature: 0.9,
-            max_tokens: 900
-          })
-        });
-
-        const json = await resp.json();
-
-        if (!resp.ok) {
-          throw new Error((json.error && json.error.message) || 'Respons OpenAI tidak berjaya.');
-        }
-
-        let text = '';
-        if (json.choices && json.choices.length > 0) {
-          text = (json.choices[0].message && json.choices[0].message.content) ? json.choices[0].message.content : '';
-        }
-
-        let parsed = [];
+      let resolved = false;
+      let lastError = null;
+      for (const key of keys) {
         try {
-          parsed = JSON.parse(text.trim());
-        } catch (e) {
-          // If parsing fails, attempt to find JSON substring
-          const jsonMatch = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-          if (jsonMatch) {
-            parsed = JSON.parse(jsonMatch[0]);
+          const aiText = await callGoogleAI(basePrompt, key);
+
+          let parsed = [];
+          try {
+            parsed = JSON.parse(aiText.trim());
+          } catch (err) {
+            const jsonMatch = aiText.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+            if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
           }
-        }
 
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-          // fallback if AI not returned parsable JSON
-          state.generated = selected.map(cls => ({
-            className: cls.name,
-            objektif: `Objektif: Mencapai pembelajaran ${cls.name}`,
-            kriteria: `Kriteria Kejayaan: Pelajar mampu menerangkan ${cls.name}`,
-            aktiviti: `Aktiviti: Latihan, perbincangan dan refleksi ${cls.name}`
-          }));
-          showStatus('OpenAI respon tidak berformat; menggunakan fallback automatik.', 'error');
-        } else {
-          state.generated = parsed.map(item => ({
-            className: item.className || item.kelas || '',
-            objektif: item.objektif || item.objective || '',
-            kriteria: item.kriteria || item.criteria || '',
-            aktiviti: item.aktiviti || item.activity || ''
-          }));
-          showStatus('RPH dijana menggunakan OpenAI.', 'success');
-        }
+          if (Array.isArray(parsed) && parsed.length) {
+            state.generated = parsed.map(item => ({
+              className: item.className || item.kelas || '',
+              objektif: item.objektif || item.objective || '',
+              kriteria: item.kriteria || item.criteria || '',
+              aktiviti: item.aktiviti || item.activity || ''
+            }));
+            selectedApiKey = key;
+            $('apiKey').value = key;
+            showStatus('RPH berjaya dijana dengan API key terpilih.', 'success');
+            resolved = true;
+            break;
+          }
 
-      } catch (err) {
-        console.error(err);
+          lastError = new Error('Format AI tidak JSON bermula');
+          showStatus(`API key gagal (tiada JSON). Mencuba key seterusnya...`, 'error');
+        } catch (err) {
+          lastError = err;
+          showStatus(`API key gagal: ${err.message}. Mencuba key seterusnya...`, 'error');
+          continue;
+        }
+      }
+
+      if (!resolved) {
         state.generated = selected.map(cls => ({
           className: cls.name,
           objektif: `Objektif: Mencapai pembelajaran ${cls.name}`,
           kriteria: `Kriteria Kejayaan: Pelajar mampu menerangkan ${cls.name}`,
           aktiviti: `Aktiviti: Latihan, perbincangan dan refleksi ${cls.name}`
         }));
-        showStatus('Gagal panggil API AI: ' + err.message, 'error');
+        showStatus('Semua key gagal. Gunakan fallback automatik. ' + (lastError ? lastError.message : ''), 'error');
       }
 
       renderGenerated();
@@ -400,10 +466,10 @@
       }
     });
 
-    // Load saved API key when page starts
-    loadSavedApiKey();
+    // Load saved API key list on startup
+    renderApiKeyList();
 
-    $('btnSaveApiKey').addEventListener('click', saveApiKey);
+    $('btnSaveApiKey').addEventListener('click', addApiKey);
     $('btnReload').addEventListener('click', async () => $('btnConnect').click());
     $('btnGenerate').addEventListener('click', generateRPH);
     $('btnFill').addEventListener('click', fillRPH);
