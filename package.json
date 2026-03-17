@@ -1,0 +1,12 @@
+{
+  "name": "gemini-rph",
+  "version": "1.0.0",
+  "description": "Gemini RPH web app with Apps Script sheet integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
