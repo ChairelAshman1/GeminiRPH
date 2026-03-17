@@ -1,1165 +1,412 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ms">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini RPH Generator</title>
-    <style>
-        :root {
-            --bg-dark: #0f172a;
-            --bg-card: #1e293b;
-            --border: #334155;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --accent-green: #059669;
-            --input-bg: #0f172a;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        body {
-            width: 100%;
-            height: 100vh;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        /* Message Bar */
-        #messageBar {
-            position: fixed;
-            bottom: 3.5rem; /* Adjusted for footer */
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background-color: #334155;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            font-size: 0.8rem;
-            z-index: 1000;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-            width: 90%;
-            text-align: center;
-            border: 1px solid var(--border);
-            pointer-events: none;
-            opacity: 0;
-        }
-        #messageBar.show {
-            transform: translateX(-50%) translateY(0);
-            pointer-events: all;
-            opacity: 1;
-        }
-        #messageBar.error { background-color: #7f1d1d; border-color: #991b1b; }
-        #messageBar.success { background-color: #065f46; border-color: #059669; }
-
-        /* --- 3D SPACE LOADING OVERLAY --- */
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            /* Deep Space Gradient to make White Robot Pop */
-            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 9999; 
-            perspective: 1000px;
-            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
-            overflow: hidden;
-        }
-        #loadingOverlay.show { opacity: 1; pointer-events: all; }
-
-        /* Stars Background */
-        #loadingOverlay::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                radial-gradient(white 1px, transparent 1px),
-                radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
-            background-size: 50px 50px, 100px 100px;
-            animation: spaceDrift 40s linear infinite;
-            opacity: 0.5;
-        }
-        @keyframes spaceDrift { from { transform: scale(1) rotate(0deg); } to { transform: scale(1.2) rotate(5deg); } }
-
-        /* --- EVE/GEMINI ROBOT DESIGN --- */
-        .eve-robot {
-            position: relative;
-            width: 140px;
-            height: 180px; 
-            transform-style: preserve-3d;
-            animation: hoverFloat 3s ease-in-out infinite;
-            margin-bottom: 1.5rem;
-        }
-
-        @keyframes hoverFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        /* HEAD */
-        .eve-head {
-            width: 80px; height: 55px;
-            /* Glossy White Gradient */
-            background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e2e8f0 60%, #94a3b8 100%);
-            border-radius: 50% 50% 45% 45%;
-            position: absolute; top: 0px; left: 30px;
-            z-index: 10;
-            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.3);
-            animation: headBob 3s ease-in-out infinite alternate;
-        }
-        @keyframes headBob { 0% { top: 0px; transform: rotate(0deg); } 100% { top: 4px; transform: rotate(2deg); } }
-
-        /* FACE SCREEN (Black Inset) */
-        .eve-face {
-            width: 60px; height: 36px;
-            background: #000;
-            border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
-            position: absolute; top: 10px; left: 10px;
-            overflow: hidden;
-            display: flex; flex-direction: column; /* Stack eyes and smile */
-            justify-content: center; align-items: center; gap: 2px;
-            box-shadow: inset 0 0 5px rgba(255,255,255,0.1);
-        }
-        
-        .face-row { display: flex; gap: 8px; justify-content: center; align-items: center; }
-
-        /* DIGITAL EYES (Blue) */
-        .eve-eye {
-            width: 18px; height: 11px;
-            background: #38bdf8; /* Neon Blue */
-            border-radius: 50% 50% 40% 40%;
-            box-shadow: 0 0 6px #38bdf8, 0 0 12px #0ea5e9;
-            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 3px);
-            animation: eveBlink 5s infinite;
-        }
-        .eve-eye.left { transform: rotate(8deg); }
-        .eve-eye.right { transform: rotate(-8deg); }
-
-        /* SMILE */
-        .eve-smile {
-            width: 16px; height: 6px;
-            border-bottom: 2px solid #38bdf8;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(56, 189, 248, 0.4);
-            opacity: 0.9;
-        }
-
-        @keyframes eveBlink {
-            0%, 96%, 100% { height: 11px; opacity: 1; }
-            98% { height: 1px; opacity: 0.7; }
-        }
-
-        /* BODY (Egg Shape - INVERTED to be Top Heavy) */
-        .eve-body {
-            width: 70px; height: 95px;
-            background: radial-gradient(circle at 30% 30%, #ffffff 0%, #cbd5e1 70%, #64748b 100%);
-            /* Widest at Top, Narrow at Bottom */
-            border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; 
-            position: absolute; top: 60px; left: 35px;
-            z-index: 5;
-            box-shadow: inset -2px -2px 8px rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.4);
-            overflow: hidden; /* For shine animation */
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        /* SHINE ANIMATION */
-        .eve-body::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.8) 50%, transparent 60%);
-            background-size: 300% 300%;
-            animation: bodyShine 3.5s infinite;
-        }
-        @keyframes bodyShine {
-            0% { background-position: 150% 150%; }
-            20% { background-position: -50% -50%; }
-            100% { background-position: -50% -50%; }
-        }
-
-        /* GEMINI BRANDING */
-        .gemini-logo {
-            width: 14px; height: 14px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            /* Star Shape */
-            clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
-            box-shadow: 0 0 10px #3b82f6;
-            margin-bottom: 2px;
-            margin-top: -10px;
-            z-index: 6;
-            animation: logoPulse 2s infinite alternate;
-        }
-        @keyframes logoPulse { 0% { filter: brightness(1); } 100% { filter: brightness(1.3); drop-shadow(0 0 3px #8b5cf6); } }
-
-        .gemini-text {
-            font-size: 5px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            color: #64748b;
-            z-index: 6;
-            opacity: 0.8;
-        }
-
-        /* ARMS (Floating Fins) - MOVED UP and OUT */
-        .eve-arm {
-            width: 18px; height: 65px;
-            background: linear-gradient(90deg, #f8fafc, #cbd5e1);
-            border-radius: 50% 20% 40% 40%; /* Fin Shape */
-            position: absolute; 
-            top: 62px; /* Raised up (Beside body shoulders) */
-            z-index: 4;
-            box-shadow: 2px 4px 8px rgba(0,0,0,0.2);
-            transform-origin: top center; /* Allow pivoting from shoulder */
-        }
-        
-        /* LEFT ARM: Waving Animation */
-        .eve-arm.left {
-            left: 5px; /* Moved further out */
-            animation: armWave 2s ease-in-out infinite;
-        }
-        @keyframes armWave {
-            0% { transform: rotate(15deg); }
-            50% { transform: rotate(60deg); } /* Higher wave */
-            100% { transform: rotate(15deg); }
-        }
-
-        /* RIGHT ARM: Holds Flag */
-        .eve-arm.right {
-            right: 5px; /* Moved further out */
-            transform: rotate(-15deg);
-            /* No wave, just float slightly */
-            animation: armFloatRight 3s ease-in-out infinite;
-        }
-
-        @keyframes armFloatRight { 0%, 100% { transform: translateY(0) rotate(-15deg); } 50% { transform: translateY(4px) rotate(-20deg); } }
-
-        /* COMPACT FLAG SYSTEM (Attached to Right Arm) */
-        .eve-flag-system {
-            position: absolute;
-            left: 50%; bottom: 6px; /* Align near the tip */
-            transform: translateX(-50%) rotate(25deg); /* Angle Outwards */
-            transform-origin: bottom center;
-            z-index: 3;
-        }
-        .eve-flag-pole {
-            width: 2px; height: 48px;
-            background: #94a3b8;
-            position: absolute; bottom: 0; left: 0;
-            border-radius: 2px;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-        }
-        .eve-flag {
-            width: 40px; 
-            height: 22px;
-            background: linear-gradient(90deg, #3b82f6, #2563eb);
-            position: absolute; top: 2px; left: 2px; /* Extend right */
-            border-radius: 0 4px 4px 0;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 5px; color: white; font-weight: 900; line-height: 1.1;
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
-            animation: holoFlag 2s infinite alternate;
-            opacity: 0.95;
-            text-align: center;
-            letter-spacing: 0.5px;
-        }
-        @keyframes holoFlag {
-            0% { transform: skewY(0deg); opacity: 0.9; }
-            100% { transform: skewY(-5deg); opacity: 1; }
-        }
-
-        /* BLUE THRUST GLOW */
-        .blue-glow {
-            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-            width: 40px; height: 10px;
-            background: rgba(56, 189, 248, 0);
-            box-shadow: 0 0 20px #38bdf8, 0 10px 30px #0ea5e9;
-            border-radius: 50%;
-            animation: glowFlicker 0.2s infinite alternate;
-        }
-        @keyframes glowFlicker { from { opacity: 0.5; transform: translateX(-50%) scale(1); } to { opacity: 0.8; transform: translateX(-50%) scale(1.1); } }
-        
-        .progress-container { width: 70%; max-width: 220px; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin-bottom: 0.8rem; border: 1px solid rgba(255,255,255,0.1); }
-        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #818cf8); box-shadow: 0 0 10px #38bdf8; transition: width 0.3s ease-out; }
-        
-        #loadingText { color: #f1f5f9; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; letter-spacing: 1px; text-transform: uppercase; }
-        #loadingSubtext { color: #94a3b8; font-size: 0.7rem; min-height: 1rem; }
-        
-        #btnCancelLoading {
-            margin-top: 1.5rem;
-            background: transparent;
-            border: 1px solid #475569;
-            color: #94a3b8;
-            padding: 0.4rem 1.2rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-        #btnCancelLoading:hover { background: rgba(255, 255, 255, 0.05); color: white; border-color: white; }
-
-        /* Header */
-        header {
-            background-color: var(--bg-card);
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            z-index: 10;
-        }
-        .brand { display: flex; align-items: center; gap: 0.5rem; }
-        .logo {
-            width: 1.75rem; height: 1.75rem;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            border-radius: 0.4rem;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: white; font-size: 0.7rem;
-        }
-        h1 {
-            font-size: 0.85rem; font-weight: 700;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        
-        .header-controls { display: flex; align-items: center; gap: 0.4rem; }
-
-        /* API Key Button Styled - COMPACT */
-        #btnApiKeyToggle {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #c7d2fe;
-            font-size: 0.6rem; 
-            padding: 0.2rem 0.4rem;
-            height: 22px;
-            border-radius: 4px; cursor: pointer; font-weight: 600;
-            display: flex; align-items: center; gap: 0.25rem;
-            transition: all 0.2s ease;
-        }
-        #btnApiKeyToggle:hover { 
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-color: #6366f1;
-        }
-        #btnApiKeyToggle svg { width: 10px; height: 10px; fill: currentColor; }
-
-        /* Status Badge */
-        .status-badge {
-            font-size: 0.6rem; padding: 0.2rem 0.6rem; 
-            border-radius: 99px; font-weight: 600;
-            display: flex; align-items: center; gap: 6px;
-            color: white; border: 1px solid rgba(255,255,255,0.1);
-            transition: background 0.3s;
-            height: 22px;
-            min-width: 60px; justify-content: center;
-            cursor: pointer;
-            user-select: none;
-        }
-        .status-badge:hover {
-            filter: brightness(1.2);
-            border-color: rgba(255,255,255,0.3);
-        }
-        .status-dot {
-            width: 6px; height: 6px; border-radius: 50%; 
-            background-color: #cbd5e1;
-            box-shadow: 0 0 2px rgba(0,0,0,0.5);
-        }
-        .status-badge.active .status-dot {
-            background-color: #4ade80;
-            box-shadow: 0 0 6px #4ade80;
-        }
-
-        /* Usage Badge */
-        .usage-badge {
-            font-size: 0.6rem; color: #94a3b8; font-weight: 500;
-            background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;
-            white-space: nowrap; border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        /* Modes Gradients */
-        .mode-api { background: linear-gradient(135deg, #1e293b, #0f172a); border-color: #4285f4; color: #60a5fa; } 
-        .mode-nano { background: linear-gradient(135deg, #1e293b, #0f172a); border-color: #a855f7; color: #c084fc; } 
-        .mode-web { background: linear-gradient(135deg, #1e293b, #0f172a); border-color: #3b82f6; color: #93c5fd; } 
-        .mode-none { background: #334155; }
-
-        /* Tabs */
-        .tabs { display: flex; background-color: var(--bg-card); border-bottom: 1px solid var(--border); }
-        .tab-btn {
-            flex: 1; padding: 0.6rem; background: none; border: none;
-            color: var(--text-muted); font-weight: 600; font-size: 0.8rem;
-            cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
-        }
-        .tab-btn:hover { background-color: rgba(255,255,255,0.05); }
-        .tab-btn.active { color: #818cf8; border-bottom-color: #818cf8; background-color: rgba(99, 102, 241, 0.1); }
-
-        /* Main Content */
-        main { flex: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; padding-bottom: 1rem; }
-        .tab-content { display: none; padding: 0.5rem; flex-direction: column; gap: 0.75rem; height: 100%; transition: opacity 0.3s ease; }
-        .tab-content.active { display: flex; }
-
-        /* API Key Section */
-        #apiKeySection {
-            background: #0f172a; border-bottom: 1px solid var(--border);
-            padding: 0.75rem; display: none;
-            animation: slideDown 0.2s ease-out;
-            position: relative;
-        }
-        #apiKeySection.show { display: block; }
-        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* Key List Styles (UPDATED ROUNDED) */
-        .key-list { 
-            max-height: 120px; overflow-y: auto; margin-top: 0.5rem; 
-            display: flex; flex-direction: column; gap: 0.3rem; 
-            /* Added Border & Rounding */
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 0.8rem;
-            padding: 0.5rem;
-            background: rgba(0,0,0,0.2);
-        }
-        .key-item { 
-            display: flex; align-items: center; gap: 0.5rem; 
-            background: rgba(255,255,255,0.03); 
-            padding: 0.3rem 0.6rem; 
-            border-radius: 99px; /* Rounded Pill Items */
-            border: 1px solid rgba(255,255,255,0.05); 
-            cursor: pointer; transition: background 0.2s; 
-            position: relative;
-            overflow: hidden;
-        }
-        .key-item:hover { background: rgba(255,255,255,0.08); }
-        
-        /* ACTIVE KEY STYLE (Green Border + Shine) */
-        .key-item.active { 
-            border-color: #4ade80 !important; 
-            background: rgba(74, 222, 128, 0.15) !important; 
-        }
-        .key-item.active::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(74,222,128,0.2), transparent);
-            transform: translateX(-100%);
-            animation: shine-item 3s infinite;
-        }
-        
-        @keyframes shine-item {
-            0% { transform: translateX(-100%); }
-            40% { transform: translateX(100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .key-mask { flex: 1; font-family: monospace; font-size: 0.7rem; color: #cbd5e1; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        
-        /* Distinct Identity Colors */
-        .color-0 { color: #22d3ee; } /* Cyan */
-        .color-1 { color: #f472b6; } /* Pink */
-        .color-2 { color: #fbbf24; } /* Amber */
-        .color-3 { color: #a78bfa; } /* Purple */
-        .color-4 { color: #f87171; } /* Red */
-
-        .key-check { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #64748b; position: relative; z-index: 2; }
-        .key-item.active .key-check { border-color: #4ade80; background: #4ade80; box-shadow: 0 0 5px rgba(74, 222, 128, 0.5); }
-
-        .btn-icon-small { padding: 2px 6px; font-size: 0.6rem; border-radius: 3px; cursor: pointer; color: #94a3b8; background: transparent; border: 1px solid transparent; z-index: 2;}
-        .btn-icon-small:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
-
-        .api-help-btn {
-            background: none; border: none; color: #60a5fa; font-size: 0.7rem; 
-            text-decoration: underline; cursor: pointer; margin-top: 0.4rem;
-            display: inline-block;
-        }
-        .api-help-btn:hover { color: #93c5fd; }
-
-        /* Sections */
-        .section {
-            background-color: rgba(30, 41, 59, 0.5);
-            padding: 0.6rem; border-radius: 0.5rem;
-            border: 1px solid var(--border);
-            display: flex; flex-direction: column; gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        /* --- DISTINCT STEP COLORS (Lighter & Low Opacity) --- */
-        
-        /* Step 1: Search - Purple Theme */
-        .section.step-purple {
-            background-color: rgba(139, 92, 246, 0.08); /* Light Purple, Low Opacity */
-            border-color: rgba(139, 92, 246, 0.3);
-        }
-        .section.step-purple label { color: #c084fc; } /* Lighter Purple Text */
-
-        /* Step 2: Input - Blue Theme */
-        .section.step-blue {
-            background-color: rgba(59, 130, 246, 0.08); /* Light Blue, Low Opacity */
-            border-color: rgba(59, 130, 246, 0.3);
-        }
-        .section.step-blue .section-header label { color: #60a5fa; } /* Lighter Blue Text */
-
-        /* Step 3: Export - Green Theme (Existing export-section adapted) */
-        .export-section.step-green {
-            background-color: rgba(16, 185, 129, 0.08); /* Light Green, Low Opacity */
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            margin-top: 0.5rem;
-        }
-        
-        .section-header { display: flex; justify-content: space-between; align-items: center; }
-        
-        label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        input, textarea, select {
-            width: 100%; background-color: var(--input-bg);
-            border: 1px solid var(--border); border-radius: 0.4rem;
-            padding: 0.4rem 0.5rem; font-size: 0.8rem; color: var(--text-main);
-            outline: none; font-family: inherit; resize: vertical;
-            transition: border-color 0.2s;
-        }
-        
-        /* Shine Animation for API Key Input */
-        @keyframes shine {
-            0% { background-position: 200% center; }
-            100% { background-position: -200% center; }
-        }
-
-        #apiKeyInput {
-            background: linear-gradient(90deg, #0f172a 25%, #1e293b 50%, #0f172a 75%);
-            background-size: 200% 100%;
-            animation: shine 6s linear infinite;
-        }
-        
-        input:focus, textarea:focus, select:focus { border-color: #6366f1; background: #0f172a; }
-        
-        /* Smart Select Styles */
-        select.smart-select {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.5rem center;
-            background-size: 1em;
-            padding-right: 2rem;
-            border-color: #6366f1;
-            background-color: rgba(99, 102, 241, 0.1);
-            color: #e0e7ff;
-        }
-        select.smart-select option { background-color: var(--bg-card); color: var(--text-main); }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-        .grid-search { display: grid; grid-template-columns: 70px 1fr; gap: 0.5rem; align-items: flex-end; margin-top: 0.4rem; }
-
-        /* Input Row with Edit Button */
-        .input-row { display: flex; gap: 4px; align-items: flex-start; width: 100%; margin-bottom: 0.4rem; }
-        .field-container { flex: 1; position: relative; }
-        
-        /* UPDATED: CIRCULAR FIELD EDIT BUTTONS */
-        .btn-edit-field {
-            width: 34px; height: 34px; padding: 0;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 50%; /* Rounded Circle */
-            font-size: 0.8rem;
-            transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .btn-edit-field:hover {
-            border-color: #60a5fa;
-            color: #60a5fa;
-            background: rgba(96, 165, 250, 0.1);
-        }
-
-        /* Buttons */
-        button { cursor: pointer; border: none; font-family: inherit; transition: all 0.2s ease; }
-        .btn-secondary { background-color: #334155; color: #e2e8f0; padding: 0.3rem 0.5rem; border-radius: 0.4rem; font-size: 0.7rem; }
-        .btn-secondary:hover { background-color: #475569; }
-        .btn-toggle { background: none; border: none; color: #60a5fa; font-size: 0.7rem; cursor: pointer; padding: 0; text-decoration: underline; }
-        .btn-danger { background-color: #ef4444; color: white; padding: 0.3rem 0.5rem; border-radius: 0.3rem; font-size: 0.7rem; }
-        .btn-danger:hover { background-color: #dc2626; }
-        
-        .bg-purple { background-color: #7c3aed; color: white; }
-        .bg-purple:hover { background-color: #6d28d9; }
-        .bg-blue { background-color: #3b82f6; color: white; }
-        .bg-blue:hover { background-color: #2563eb; }
-        .bg-orange { background-color: #ea580c; color: white; }
-        .bg-orange:hover { background-color: #c2410c; }
-        .bg-green { background-color: #10b981; color: white; }
-        .bg-green:hover { background-color: #059669; }
-
-        .btn-generate {
-            width: 100%; background: linear-gradient(to right, var(--accent-green), #10b981);
-            color: white; padding: 0.6rem; border-radius: 0.4rem;
-            font-size: 0.85rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-            transition: transform 0.1s;
-        }
-        .btn-generate:active { transform: scale(0.98); }
-        .btn-generate:hover { background: linear-gradient(to right, #047857, #059669); }
-        
-        /* Lists Redesign - COMPACT GROUPED */
-        .generated-list { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 0; 
-            background-color: rgba(15, 23, 42, 0.4);
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            overflow: hidden;
-            transition: height 0.3s ease;
-        } 
-        
-        /* Compact List Row: Number | Content | Actions */
-        .list-row-compact {
-            display: grid;
-            grid-template-columns: 24px 1fr 50px; /* Actions column wider for delete button */
-            gap: 0.25rem;
-            align-items: start;
-            background: transparent;
-            padding: 0.35rem 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .list-row-compact:last-child { border-bottom: none; }
-        .list-row-compact:hover { background: rgba(255,255,255,0.02); }
-        
-        .item-number {
-            font-size: 0.75rem; color: #64748b; font-weight: bold;
-            text-align: right; padding-top: 0.35rem; pointer-events: none;
-        }
-        
-        .list-row-compact textarea {
-            font-size: 0.8rem; padding: 0.35rem 0;
-            min-height: 1.8rem; line-height: 1.4;
-            background-color: transparent; 
-            border: none;
-            border-radius: 0; resize: none; overflow: hidden;
-            color: #e2e8f0;
-        }
-        .list-row-compact textarea:focus { 
-            background: transparent;
-            box-shadow: none;
-        }
-        
-        .row-actions {
-            display: flex; gap: 4px; height: 100%;
-        }
-
-        .btn-icon.paste-mini {
-            padding: 0; width: 20px; height: 100%;
-            background-color: transparent; 
-            border-radius: 0.25rem; display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: color 0.2s;
-            margin: 0;
-            color: #475569; 
-        }
-        .btn-icon.paste-mini:hover { color: #60a5fa; background-color: rgba(255,255,255,0.05); }
-
-        /* Split Actions: Delete Top / Add Bottom */
-        .split-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            flex: 1;
-            height: 100%;
-        }
-
-        .btn-icon.half {
-            height: 50%; width: 100%;
-            font-size: 0.6rem; margin: 0; padding: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: transparent; border-radius: 2px;
-            cursor: pointer;
-        }
-        
-        .btn-icon.delete-mini { color: #94a3b8; }
-        .btn-icon.delete-mini:hover { color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
-
-        .btn-icon.add-mini { color: #4ade80; font-weight: bold; }
-        .btn-icon.add-mini:hover { color: #22c55e; background-color: rgba(74, 222, 128, 0.1); }
-        
-        .btn-icon svg { width: 14px; height: 14px; }
-
-        /* Output header logic */
-        .output-header-row {
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 0.25rem;
-        }
-        .label-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Export Section */
-        .export-section {
-            border-radius: 0.5rem; padding: 0.75rem;
-            display: flex; flex-direction: column; gap: 0.5rem;
-        }
-        .export-header { display:flex; justify-content:space-between; align-items:center; }
-        .export-header label { color: #34d399; font-size: 0.75rem; }
-
-        /* Collapsible Data Upload */
-        #dataUploadSection {
-            overflow: hidden; transition: max-height 0.3s ease-out;
-            max-height: 0; opacity: 0;
-        }
-        #dataUploadSection.expanded {
-            max-height: 800px; opacity: 1; padding-top: 0.5rem;
-        }
-
-        /* Data Tabs */
-        .data-tabs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
-        .data-tab-btn {
-            background: transparent; border: 1px solid var(--border);
-            color: var(--text-muted); font-size: 0.7rem; padding: 0.3rem 0.6rem;
-            border-radius: 0.4rem; white-space: nowrap;
-        }
-        .data-tab-btn.active { background: rgba(99, 102, 241, 0.1); border-color: #6366f1; color: #818cf8; }
-
-        /* Data Card */
-        .data-card {
-            background: rgba(0,0,0,0.2); border-radius: 0.5rem; padding: 0.5rem;
-            margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05);
-        }
-        .data-card-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 0.3rem; font-size: 0.7rem; font-weight: bold; color: #94a3b8;
-        }
-        .data-edit-input {
-            width: 100%; font-size: 0.75rem; background: rgba(0,0,0,0.3);
-            border: 1px solid transparent; color: #e2e8f0; padding: 0.2rem;
-        }
-        .data-edit-input:focus { border-color: #6366f1; }
-
-        /* Modals */
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; padding: 1rem; }
-        .modal.show { opacity: 1; pointer-events: all; }
-        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-
-        .hide { display: none !important; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-card); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-        /* Disabled Button Style */
-        .btn-disabled {
-            opacity: 0.5;
-            cursor: not-allowed !important;
-            filter: grayscale(1);
-        }
-        
-        /* Footer */
-        footer {
-            background-color: var(--bg-dark);
-            border-top: 1px solid var(--border);
-            padding: 0.5rem;
-            text-align: center;
-            font-size: 0.65rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini RPH Simple</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; min-height: 100vh; }
+    .container { max-width: 900px; margin: auto; padding: 1rem; }
+    h1 { margin-bottom: 0.4rem; color: #60a5fa; }
+    label { display: block; margin: 0.6rem 0 0.15rem; font-size: 0.85rem; color: #94a3b8; }
+    input, button, select, textarea { width: 100%; border-radius: 0.45rem; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; padding: 0.6rem; font-size: 0.95rem; }
+    button { cursor: pointer; background: #2563eb; color: #fff; border: none; margin-top: 0.45rem; min-height: 38px; }
+    button:hover { background: #1d4ed8; }
+    .row { display: flex; gap: 0.6rem; margin-top: 0.25rem; }
+    .row > * { flex: 1; }
+    .small-btn { width: 160px; flex: 0 0 auto; }
+    .panel { margin-top: 1rem; border: 1px solid #334155; background: #111827; padding: 0.75rem; border-radius: 0.6rem; }
+    .pill { display: inline-block; margin: 0.2rem 0.2rem 0.2rem 0; padding: 0.35rem 0.65rem; border-radius: 999px; border: 1px solid #334155; background: #334155; cursor: pointer; }
+    .pill.active { background: #2563eb; border-color: #60a5fa; }
+    .list-item { display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid #334155; padding: 0.45rem 0; }
+    .list-item label { flex: 1; }
+    .msg { margin-top: 0.8rem; font-size: 0.88rem; color: #94a3b8; }
+    .output-card { background: #1f2937; border: 1px solid #334155; border-radius: 0.5rem; padding: 0.55rem; margin-top: 0.5rem; }
+    .output-card h3 { margin: 0 0 0.35rem 0; font-size: 0.93rem; }
+    .output-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.4rem; margin-top: 0.4rem; }
+    .output-grid>div { background:#111827; padding:0.4rem; border:1px solid #334155; border-radius:0.35rem; min-height:2.4rem; }
+    .flex-right { display:flex; justify-content:flex-end; gap:0.4rem; margin-top:0.5rem; }
+    .badge { font-size:0.8rem; padding:0.2rem 0.45rem; border-radius:999px; background:#334155; color:#cbd5e1; }
+    .hide { display:none !important; }
+    pre { white-space: pre-wrap; word-wrap: break-word; margin:0; font-size:0.85rem; }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Gemini RPH - Main</h1>
 
-    <div id="messageBar">Pesej sistem</div>
+    <label for="scriptUrl">Apps Script URL (Web App Exec):</label>
+    <input id="scriptUrl" placeholder="https://script.google.com/macros/s/XXX/exec" value="" />
 
-    <!-- 3D SPACE LOADING OVERLAY -->
-    <div id="loadingOverlay">
-        
-        <!-- EVE-STYLE ROBOT (White, Glossy, Blue Eyes) -->
-        <div class="eve-robot">
-            <!-- Floating Head -->
-            <div class="eve-head">
-                <div class="eve-face">
-                    <div class="face-row">
-                        <div class="eve-eye left"></div>
-                        <div class="eve-eye right"></div>
-                    </div>
-                    <div class="eve-smile"></div>
-                </div>
-            </div>
-            
-            <!-- Body -->
-            <div class="eve-body">
-                <div class="gemini-logo"></div>
-                <div class="gemini-text">GEMINI</div>
-                
-                <!-- Floating Arms (Now positioned BESIDE the body) -->
-                <div class="eve-arm left"></div>
-                <div class="eve-arm right">
-                     <!-- Compact Flag System Attached to Right Arm -->
-                     <div class="eve-flag-system">
-                        <div class="eve-flag-pole"></div>
-                        <div class="eve-flag">
-                            CHAIREL<br>ASHMAN
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Blue Glow/Thruster -->
-            <div class="blue-glow"></div>
-        </div>
-        
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-        
-        <div id="loadingText">Sedang Memproses...</div>
-        <div id="loadingSubtext">AI sedang terbang mencari idea!</div>
-        
-        <button id="btnCancelLoading">Batal</button>
+    <label for="apiKey">OpenAI API Key:</label>
+    <div class="row">
+      <input id="apiKey" type="password" placeholder="sk-..." style="flex: 1;" />
+      <button id="btnSaveApiKey" class="small-btn">Simpan API Key</button>
     </div>
 
-    <header>
-        <div class="brand">
-            <div class="logo">RPH</div>
-            <h1>Gemini RPH</h1>
-        </div>
-        <div class="header-controls">
-            <span id="apiUsageBadge" class="usage-badge" title="Anggaran Penggunaan API Hari Ini">Use: 0/20</span>
-            <button id="btnApiKeyToggle" title="Tetapan API Key">
-                <svg viewBox="0 0 24 24"><path d="M7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-            </button>
-            <div id="statusBadge" class="status-badge mode-none" title="Klik untuk tukar Mode">
-                <div class="status-dot"></div>
-                <span id="statusText">...</span>
-            </div>
-        </div>
-    </header>
-    
-    <!-- API Key Collapsible Section -->
-    <div id="apiKeySection">
-        <label style="margin-bottom: 0.3rem;">Pengurusan Gemini API Key</label>
-        
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <input type="password" id="apiKeyInput" placeholder="Masukkan Key Baru...">
-            <button id="btnAddKey" class="btn-secondary bg-blue" style="width: auto; padding: 0 1rem;">Tambah</button>
-        </div>
-        
-        <div id="keyList" class="key-list">
-            <!-- Dynamic Keys Will Be Rendered Here -->
-        </div>
+    <label for="sheetUrl">Google Spreadsheet URL:</label>
+    <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/xxx/edit" />
 
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <p style="font-size: 0.65rem; color: #64748b; margin-top: 0.3rem; flex:1;">
-                *Key aktif ditanda hijau. Klik untuk tukar.
-            </p>
-            <button id="btnShowHelp" class="api-help-btn">Panduan</button>
-        </div>
+    <div class="row">
+      <button id="btnConnect" class="small-btn">Sambung Spreadsheet</button>
+      <button id="btnReload" class="small-btn">Refresh Harian</button>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="generator">Generator</button>
-        <button class="tab-btn" data-tab="data">Pengurusan Data</button>
+    <div id="status" class="msg">Sila masukkan URL dan sambung.</div>
+
+    <div id="dayPanel" class="panel hide">
+      <div><strong>Hari Ditemui:</strong></div>
+      <div id="dayButtons"></div>
     </div>
 
-    <main>
-        <!-- TAB 1: GENERATOR -->
-        <div id="tab-generator" class="tab-content active">
-
-            <!-- Section 1 (Purple) -->
-            <div class="section step-purple">
-                <div class="section-header">
-                    <label>Langkah 1: Cari Data (DSKP/RPT)</label>
-                </div>
-                
-                <!-- Always Visible: Dropdown -->
-                <select id="rphMode" style="margin-bottom: 0.5rem; margin-top: 0.5rem;">
-                    <option value="standard">Standard (PdP)</option>
-                    <option value="exam">Peperiksaan / Ujian</option>
-                    <option value="special">Aktiviti Khas</option>
-                </select>
-
-                <!-- Always Visible: Search -->
-                 <div id="step1SearchSection">
-                     <div class="grid-search">
-                        <div>
-                            <label>Minggu</label>
-                            <input type="number" id="inputRPTWeek" placeholder="3">
-                        </div>
-                        <div>
-                            <label>Kata Kunci</label>
-                            <input type="text" id="inputRPTTopic" placeholder="Cth: Kemerdekaan">
-                        </div>
-                     </div>
-                     <button id="btnAnalyzeRPT" class="btn-secondary bg-purple" style="height: 32px; width: 100%; margin-top: 0.5rem;">
-                        🔍 Cari Data
-                    </button>
-                 </div>
-            </div>
-
-            <!-- Section 2 (Blue) -->
-            <div class="section step-blue">
-                <div class="section-header">
-                    <label>Langkah 2: Semak & Isi Data</label>
-                    <button id="btnClearStep2" class="btn-danger" style="font-size:0.6rem; padding: 2px 6px;">Padam Semua</button>
-                </div>
-                
-                <!-- Standard PdP Inputs -->
-                <div id="standardInputs">
-                    <div class="grid-2">
-                        <div class="input-row">
-                            <div class="field-container">
-                                <input type="text" id="inputTema" placeholder="Tema / Bidang">
-                                <select id="inputTemaSelect" class="smart-select hide"></select>
-                            </div>
-                            <button id="btnEditTema" class="btn-edit-field" title="Edit Manual">✏️</button>
-                        </div>
-                        <div class="input-row">
-                            <div class="field-container">
-                                <input type="text" id="inputTajuk" placeholder="Tajuk">
-                                <select id="inputTajukSelect" class="smart-select hide"></select>
-                            </div>
-                            <button id="btnEditTajuk" class="btn-edit-field" title="Edit Manual">✏️</button>
-                        </div>
-                    </div>
-                    
-                    <div class="input-row">
-                        <div class="field-container">
-                            <textarea id="inputSK" rows="1" placeholder="Standard Kandungan (SK)"></textarea>
-                            <select id="inputSKSelect" class="smart-select hide"></select>
-                        </div>
-                        <button id="btnEditSK" class="btn-edit-field" title="Edit Manual">✏️</button>
-                    </div>
-
-                    <div class="input-row">
-                        <div class="field-container">
-                            <textarea id="inputSP" rows="2" placeholder="Standard Pembelajaran (SP)..." style="border-color: var(--primary);"></textarea>
-                            <select id="inputSPSelect" class="smart-select hide"></select>
-                        </div>
-                        <button id="btnEditSP" class="btn-edit-field" title="Edit Manual">✏️</button>
-                    </div>
-
-                    <textarea id="rptRawData" rows="1" placeholder="Nota Tambahan..." style="margin-top: 0.4rem; font-size: 0.75rem; color: #94a3b8;"></textarea>
-                </div>
-                
-                <!-- Exam Inputs -->
-                <div id="examInputs" class="hide">
-                    <input type="text" id="inputExamSubject" placeholder="Mata Pelajaran / Perkara" style="margin-bottom: 0.5rem;">
-                    <input type="text" id="inputExamType" placeholder="Jenis Peperiksaan (Cth: Percubaan SPM)">
-                </div>
-
-                <!-- Special Activity Inputs -->
-                <div id="specialInputs" class="hide">
-                    <div class="grid-2">
-                        <input type="text" id="specialSubject" placeholder="Subjek / Perkara">
-                        <input type="text" id="specialForm" placeholder="Tingkatan / Darjah">
-                    </div>
-                    <input type="text" id="specialActivity" placeholder="Jenis Aktiviti (Optional)" style="margin-top:0.5rem;">
-                    <p style="font-size:0.6rem; color:#64748b; margin-top:0.2rem;">*Jika kosong, AI akan cadangkan aktiviti santai/permainan.</p>
-                </div>
-
-                <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                    <button id="apiGenerateBtn" class="btn-generate">
-                        <span>✨ Jana RPH Automatik</span>
-                    </button>
-                    <!-- Button for Gemini Web Mode ONLY -->
-                    <button id="btnWebScrape" class="btn-secondary bg-blue hide" style="height: 32px; width: 100%;">
-                        📥 Ambil Data (Gemini Web)
-                    </button>
-                </div>
-            </div>
-
-            <!-- Section 3: Outputs -->
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; padding-bottom: 2rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold; color:#cbd5e1; font-size:0.8rem;">Hasil Janaan</span>
-                    <button id="btnClearOutputs" class="btn-danger" style="font-size:0.65rem; padding: 3px 8px;">Padam Semua</button>
-                </div>
-
-                <div class="output-group">
-                    <div class="output-header-row">
-                        <div class="label-group">
-                            <label style="color: #60a5fa;">Objektif (ABCD)</label>
-                            <button class="btn-secondary btn-paste-all bg-blue" data-target="listObjektif" style="font-size:0.65rem; padding: 1px 6px;">Salin</button>
-                        </div>
-                    </div>
-                    <div id="listObjektif" class="generated-list">
-                        <div style="text-align:center; color:#94a3b8; font-size:0.75rem; padding: 1rem;">Data akan muncul di sini...</div>
-                    </div>
-                </div>
-                <div class="output-group">
-                    <div class="output-header-row">
-                        <div class="label-group">
-                            <label style="color: #c084fc;">Kriteria Kejayaan</label>
-                            <button class="btn-secondary btn-paste-all bg-purple" data-target="listKriteria" style="font-size:0.65rem; padding: 1px 6px;">Salin</button>
-                        </div>
-                    </div>
-                    <div id="listKriteria" class="generated-list">
-                        <div style="text-align:center; color:#94a3b8; font-size:0.75rem; padding: 1rem;">Data akan muncul di sini...</div>
-                    </div>
-                </div>
-                <div class="output-group">
-                    <div class="output-header-row">
-                        <div class="label-group">
-                            <label style="color: #fb923c;">Aktiviti (Langkah)</label>
-                            <button class="btn-secondary btn-paste-all bg-orange" data-target="listAktiviti" style="font-size:0.65rem; padding: 1px 6px;">Salin</button>
-                        </div>
-                    </div>
-                    <div id="listAktiviti" class="generated-list">
-                        <div style="text-align:center; color:#94a3b8; font-size:0.75rem; padding: 1rem;">Data akan muncul di sini...</div>
-                    </div>
-                </div>
-
-                <!-- Export Section (Green) - MANUAL COPY -->
-                <div class="export-section step-green">
-                    <div class="export-header">
-                        <label>Langkah 3: Hantar ke Google Sheet</label>
-                        <button id="btnExportHelp" class="btn-secondary bg-blue" style="font-size:0.65rem; padding: 2px 6px;">❓ Bantuan</button>
-                    </div>
-                    <p style="font-size:0.6rem; color:#d1fae5; margin:0.2rem 0;">Pastikan Google Sheet dibuka di tab sebelah.</p>
-
-                    <!-- New Spreadsheet Link Section -->
-                    <div style="display:flex; flex-direction: column; gap: 0.45rem; margin-bottom: 0.5rem;">
-                        <input id="sheetAppScriptUrl" type="url" placeholder="Apps Script URL (https://script.google.com/macros/s/XXX/exec)" style="width:100%; padding:0.55rem; border-radius:6px; border:1px solid rgba(148,163,184,0.4); background:rgba(15,23,42,0.95); color:#e2e8f0;">
-                        <input id="sheetIdInput" type="text" placeholder="Sheet ID (optional untuk sheets lian)" style="width:100%; padding:0.55rem; border-radius:6px; border:1px solid rgba(148,163,184,0.4); background:rgba(15,23,42,0.95); color:#e2e8f0;">
-                        <input id="sheetNameInput" type="text" placeholder="Nama Sheet (e.g., RPH)" style="width:100%; padding:0.55rem; border-radius:6px; border:1px solid rgba(148,163,184,0.4); background:rgba(15,23,42,0.95); color:#e2e8f0;">
-                        <input id="sheetRangeInput" type="text" placeholder="Range contoh: A2:C2" style="width:100%; padding:0.55rem; border-radius:6px; border:1px solid rgba(148,163,184,0.4); background:rgba(15,23,42,0.95); color:#e2e8f0;">
-                        <div style="display:flex; gap:0.4rem;">
-                            <button id="btnConnectSheet" class="btn-secondary bg-indigo" style="flex:1;">🔗 Sambung</button>
-                            <button id="btnPushToSheet" class="btn-secondary bg-emerald" style="flex:1;">📤 Hantar ke Sheet</button>
-                        </div>
-                        <span id="sheetStatus" style="font-size:0.65rem; color:#94a3b8;">Status: Belum disambung.</span>
-                    </div>
-
-                    <div style="display:flex; flex-direction: column; gap: 0.5rem; width:100%;">
-                        <button id="btnSmartCopy" class="btn-secondary bg-green" style="width:100%; display:flex; justify-content:center; gap:0.5rem; padding:0.5rem;">                            <span>🚀 Salin RPH Lengkap (Klik Class)</span>
-                        </button>
-                        <button id="btnObjektifCopy" class="btn-secondary bg-orange" style="width:100%; display:flex; justify-content:center; gap:0.5rem; padding:0.5rem;">
-                            <span>🎯 Salin Dari Objektif (Klik Cell Obj 1)</span>
-                        </button>
-                        <button id="btnStopCopy" class="btn-danger" style="width:100%; display:none; padding:0.5rem; white-space:nowrap; text-align:center;">
-                            ⏹ Stop
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- TAB 2: DATA & RUJUKAN -->
-        <div id="tab-data" class="tab-content">
-            <div class="section">
-                <div class="section-header">
-                    <label>Muat Naik Fail</label>
-                    <button id="btnToggleUpload" class="btn-toggle">Tunjuk/Sembunyi</button>
-                </div>
-                
-                <div id="dataUploadSection">
-                    <label style="margin-top:0.5rem; color:#60a5fa;">1. Masukkan DSKP (PDF/TXT)</label>
-                    <input type="file" id="dskpFileInput" multiple accept=".pdf,.txt" style="font-size:0.7rem; margin-bottom:0.5rem;">
-                    
-                    <label style="margin-top:0.5rem; color:#a855f7;">2. Masukkan RPT (PDF/TXT)</label>
-                    <input type="file" id="rptFileInput" multiple accept=".pdf,.txt" style="font-size:0.7rem; margin-bottom:0.5rem;">
-                    
-                    <button id="btnLearnData" class="btn-secondary bg-green" style="width:100%; margin-top:0.5rem; padding:0.6rem;">
-                        🧠 Analisis & Susun Data
-                    </button>
-                </div>
-            </div>
-
-            <div class="section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-                <div class="section-header" style="margin-bottom:0.5rem;">
-                    <label>Data Tersusun</label>
-                    <button id="btnClearDataStore" class="btn-danger" style="font-size:0.6rem;">Reset</button>
-                </div>
-                
-                <!-- Dynamic Tabs Container -->
-                <div id="formTabsContainer" class="data-tabs">
-                    <!-- Tabs like [Tingkatan 1] [Tingkatan 2] injected here -->
-                </div>
-
-                <!-- Dynamic Data Content Container -->
-                <div id="dataResultsArea" style="flex:1; overflow-y:auto; padding-right:0.25rem;">
-                     <div class="empty-files">Tiada data dianalisis. Sila muat naik DSKP & RPT.</div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- MANUAL TEXT INPUT MODAL -->
-    <div id="manualTextModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:white; font-weight:bold; font-size:0.9rem;">Paste Teks / Arahan Manual</span>
-                <button id="btnCloseManual" class="btn-secondary">✕</button>
-            </div>
-            <p style="font-size:0.7rem; color:#94a3b8;">
-                Masukkan teks RPT atau arahan khusus untuk AI (cth: "Guna format silibus terkini").
-            </p>
-            <textarea id="manualTextInput" rows="10" placeholder="Paste data atau arahan di sini..." style="font-size:0.7rem; white-space: pre-wrap;"></textarea>
-            <button id="btnSaveManualText" class="btn-secondary bg-green" style="width:100%">Simpan Data</button>
-        </div>
-    </div>
-    
-    <!-- MODE SELECTION MODAL -->
-    <div id="modeModal" class="modal">
-        <div class="modal-content" style="max-width: 300px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:white; font-weight:bold;">Pilih Mode Sistem</span>
-                <button id="btnCloseMode" class="btn-danger">×</button>
-            </div>
-            
-            <button id="btnSelectAPI" class="btn-secondary" style="text-align:left; padding:0.8rem; border:1px solid #334155;">
-                <div style="font-weight:bold; color:#4ade80; margin-bottom:0.2rem;">🚀 API Mode (Disyorkan)</div>
-                <div style="font-size:0.7rem; color:#94a3b8;">Pantas, stabil, guna Cloud API Key.</div>
-            </button>
-
-            <button id="btnSelectWeb" class="btn-secondary" style="text-align:left; padding:0.8rem; border:1px solid #334155;">
-                <div style="font-weight:bold; color:#60a5fa; margin-bottom:0.2rem;">🌐 Web Mode (Automation)</div>
-                <div style="font-size:0.7rem; color:#94a3b8;">Guna tab gemini.google.com secara percuma.</div>
-            </button>
-        </div>
+    <div id="classPanel" class="panel hide">
+      <div class="flex-right"><span class="badge" id="classCount">0 kelas</span></div>
+      <div id="classList"></div>
     </div>
 
-    <!-- EXPORT HELP MODAL -->
-    <div id="exportHelpModal" class="modal">
-        <div class="modal-content" style="max-width:350px;">
-            <div style="display:flex; justify-content:space-between; color:white; font-weight:bold;">
-                <span>Panduan Eksport RPH</span><button id="btnCloseExportHelp" class="btn-danger">×</button>
-            </div>
-            <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.5;">
-                <p>1. Jana RPH lengkap dahulu (Langkah 1 & 2).</p>
-                <p>2. Pergi ke Tab <strong>Google Sheet</strong>.</p>
-                <p>3. Klik pada sel <strong>KELAS/ CLASS</strong>.</p>
-                <p>4. Klik butang <strong>"🚀 Salin RPH Lengkap"</strong>.</p>
-                <p>5. Sistem akan menyalin data secara automatik mengikut urutan Tema -> Tajuk -> SK -> SP -> Objektif -> Kriteria -> Aktiviti.</p>
-                <p style="color:#ef4444; margin-top:0.5rem;">Klik "Stop" jika perlu membatalkan proses.</p>
-            </div>
-        </div>
+    <div id="actionPanel" class="panel hide">
+      <button id="btnGenerate" >✨ Jana RPH Untuk Kelas Terpilih</button>
+      <button id="btnFill" style="background:#059669;">🖱 Isi RPH ke Sheet</button>
+      <div id="generateInfo" class="msg">Tiada RPH dijana lagi.</div>
     </div>
 
-    <!-- HELP MODAL -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content" style="max-width:350px;">
-            <div style="display:flex; justify-content:space-between; color:white; font-weight:bold;">
-                <span>Panduan API Key</span><button id="btnCloseHelp" class="btn-danger">×</button>
-            </div>
-            <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.5;">
-                <p>1. Pergi ke <strong>Google AI Studio</strong>.</p>
-                <p>2. Login akaun Google.</p>
-                <p>3. Klik "Get API key".</p>
-                <p>4. Klik "Create API key".</p>
-                <p>5. Copy dan Paste di sini.</p>
-                <br>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#60a5fa; display:block; text-align:center; border:1px solid #334155; padding:0.5rem; border-radius:0.5rem;">Buka Google AI Studio ↗</a>
-            </div>
-        </div>
+    <div id="resultPanel" class="panel hide">
+      <h2 style="font-size:1rem;">Hasil RPH</h2>
+      <div id="resultList"></div>
     </div>
+  </div>
 
-    <footer>&copy; Created by Chairel Ashman</footer>
+  <script>
+    const STORAGE_API_KEY = 'gemini_rph_api_key';
 
-    <script src="geminiRPH.js"></script>
+    const state = {
+      sheetId: '',
+      selectedDaySheet: null,
+      daySheets: [],
+      classItems: [],
+      generated: []
+    };
+
+    const $ = id => document.getElementById(id);
+
+    const loadSavedApiKey = () => {
+      const stored = localStorage.getItem(STORAGE_API_KEY);
+      if (stored) {
+        $('apiKey').value = stored;
+        showStatus('OpenAI API Key dimuatkan dari sistem.', 'success');
+      }
+    };
+
+    const saveApiKey = () => {
+      const key = $('apiKey').value.trim();
+      if (!key || !key.startsWith('sk-')) {
+        showStatus('Sila masukkan OpenAI API key sah bermula dengan sk-.', 'error');
+        return;
+      }
+      localStorage.setItem(STORAGE_API_KEY, key);
+      showStatus('OpenAI API Key disimpan selama-lamanya (sehingga dipadam).', 'success');
+    };
+
+    const getApiKey = () => {
+      const key = $('apiKey').value.trim() || localStorage.getItem(STORAGE_API_KEY) || '';
+      if (key) localStorage.setItem(STORAGE_API_KEY, key);
+      return key;
+    };
+
+    const getSheetId = (url) => {
+      try {
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        return match ? match[1] : '';
+      } catch (e) { return ''; }
+    };
+
+    const showStatus = (text, type = 'info') => {
+      const el = $('status');
+      el.textContent = text;
+      if (type==='error') el.style.color = '#fca5a5';
+      else if (type==='success') el.style.color = '#86efac';
+      else el.style.color = '#cbd5e1';
+    };
+
+    const getApiUrl = () => {
+      let url = $('scriptUrl').value.trim();
+      if (!url) {
+        showStatus('Sila masukkan Apps Script URL.', 'error');
+        return null;
+      }
+      return url.replace(/\/+$/,'');
+    };
+
+    async function apiGet(params) {
+      const base = getApiUrl(); if (!base) throw new Error('Tiada URL');
+      const query = new URLSearchParams(params).toString();
+      const resp = await fetch(`${base}?${query}`, { method:'GET' });
+      return resp.json();
+    }
+
+    async function apiPost(body) {
+      const base = getApiUrl(); if (!base) throw new Error('Tiada URL');
+      const resp = await fetch(base, {
+        method:'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return resp.json();
+    }
+
+    const getDaySheetNames = (list) => {
+      const days = ['Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu','Ahad', 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      return list.filter(name => days.some(d => name.toLowerCase().includes(d.toLowerCase())));
+    };
+
+    const renderDayButtons = () => {
+      const container = $('dayButtons');
+      container.innerHTML='';
+      if (!state.daySheets.length) {
+        container.innerHTML = '<span style="color:#94a3b8;">Tiada hari dijumpai.</span>';
+        return;
+      }
+      state.daySheets.forEach(sheetName => {
+        const btn = document.createElement('button');
+        btn.textContent = sheetName;
+        btn.className = 'pill ' + (state.selectedDaySheet===sheetName ? 'active' : '');
+        btn.onclick = () => selectDaySheet(sheetName);
+        container.appendChild(btn);
+      });
+    };
+
+    const selectDaySheet = async (sheetName) => {
+      state.selectedDaySheet = sheetName;
+      renderDayButtons();
+      showStatus(`Sheet hari dipilih: ${sheetName}`, 'success');
+      try {
+        const readResp = await apiGet({ action:'read', sheetId: state.sheetId, sheetName, range:'A2:A200' });
+        if (readResp.status !== 'ok') throw new Error(readResp.message || 'Gagal baca');
+
+        const flat = (readResp.values || []).map(row => (row[0] || '').toString().trim()).filter(Boolean);
+        state.classItems = flat.map((cls, idx) => ({ id: idx, name: cls, selected: false }));
+        renderClassList();
+
+      } catch (err) {
+        showStatus('Error baca kelas: ' + err.message, 'error');
+      }
+    };
+
+    const renderClassList = () => {
+      const p = $('classPanel');
+      const container = $('classList');
+      if (!state.classItems.length) {
+        container.innerHTML = '<em>Tiada kelas ditemui dalam lembar kerja ini.</em>';
+        $('classCount').textContent = '0 kelas';
+        p.classList.remove('hide');
+        $('actionPanel').classList.add('hide');
+        $('resultPanel').classList.add('hide');
+        return;
+      }
+
+      const listHtml = state.classItems.map(item => {
+        const checked = item.selected ? 'checked' : '';
+        return `<div class='list-item'><input type='checkbox' data-id='${item.id}' ${checked} /><label>${item.name}</label></div>`;
+      }).join('');
+      container.innerHTML = listHtml;
+
+      container.querySelectorAll('input[type=checkbox]').forEach(el => {
+        el.addEventListener('change', (e) => {
+          const id = Number(e.target.dataset.id);
+          const found = state.classItems.find(x => x.id === id);
+          if (found) found.selected = e.target.checked;
+          $('classCount').textContent = `${state.classItems.filter(x=>x.selected).length} dipilih`;
+          const any = state.classItems.some(x=>x.selected);
+          if (any) $('actionPanel').classList.remove('hide');
+          else $('actionPanel').classList.add('hide');
+        });
+      });
+
+      $('classCount').textContent = `${state.classItems.length} kelas`; 
+      p.classList.remove('hide');
+      $('actionPanel').classList.add('hide');
+      $('resultPanel').classList.add('hide');
+    };
+
+    const generateRPH = async () => {
+      const selected = state.classItems.filter(x=>x.selected);
+      if (!selected.length) {
+        showStatus('Pilih sekurang-kurangnya satu kelas.', 'error');
+        return;
+      }
+
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        showStatus('Sila simpan OpenAI API Key terlebih dahulu.', 'error');
+        return;
+      }
+
+      showStatus('Hubungi OpenAI untuk menjana RPH...', 'info');
+      const classNames = selected.map(x=>x.name).join(', ');
+      const prompt = `Sediakan RPH untuk setiap kelas berikut. Jawab dalam format JSON array dengan objek yang mengandungi className, objektif, kriteria, aktiviti.  Berikan 1 objektif, 1 kriteria kejayaan dan 1 aktiviti ringkas untuk setiap kelas.`;
+
+      try {
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'Anda adalah pembantu guru yang menyusun RPH dalam Bahasa Melayu ringkas dan terstruktur.' },
+              { role: 'user', content: `Kelas: ${classNames}. ${prompt}` }
+            ],
+            temperature: 0.9,
+            max_tokens: 900
+          })
+        });
+
+        const json = await resp.json();
+
+        if (!resp.ok) {
+          throw new Error((json.error && json.error.message) || 'Respons OpenAI tidak berjaya.');
+        }
+
+        let text = '';
+        if (json.choices && json.choices.length > 0) {
+          text = (json.choices[0].message && json.choices[0].message.content) ? json.choices[0].message.content : '';
+        }
+
+        let parsed = [];
+        try {
+          parsed = JSON.parse(text.trim());
+        } catch (e) {
+          // If parsing fails, attempt to find JSON substring
+          const jsonMatch = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+          if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0]);
+          }
+        }
+
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          // fallback if AI not returned parsable JSON
+          state.generated = selected.map(cls => ({
+            className: cls.name,
+            objektif: `Objektif: Mencapai pembelajaran ${cls.name}`,
+            kriteria: `Kriteria Kejayaan: Pelajar mampu menerangkan ${cls.name}`,
+            aktiviti: `Aktiviti: Latihan, perbincangan dan refleksi ${cls.name}`
+          }));
+          showStatus('OpenAI respon tidak berformat; menggunakan fallback automatik.', 'error');
+        } else {
+          state.generated = parsed.map(item => ({
+            className: item.className || item.kelas || '',
+            objektif: item.objektif || item.objective || '',
+            kriteria: item.kriteria || item.criteria || '',
+            aktiviti: item.aktiviti || item.activity || ''
+          }));
+          showStatus('RPH dijana menggunakan OpenAI.', 'success');
+        }
+
+      } catch (err) {
+        console.error(err);
+        state.generated = selected.map(cls => ({
+          className: cls.name,
+          objektif: `Objektif: Mencapai pembelajaran ${cls.name}`,
+          kriteria: `Kriteria Kejayaan: Pelajar mampu menerangkan ${cls.name}`,
+          aktiviti: `Aktiviti: Latihan, perbincangan dan refleksi ${cls.name}`
+        }));
+        showStatus('Gagal panggil API AI: ' + err.message, 'error');
+      }
+
+      renderGenerated();
+    };
+
+    const renderGenerated = () => {
+      const panel = $('resultPanel');
+      const container = $('resultList');
+      if (!state.generated.length) {
+        container.innerHTML = '<em>Tiada RPH dijana.</em>';
+        panel.classList.remove('hide');
+        return;
+      }
+
+      container.innerHTML = state.generated.map(item => `
+        <div class='output-card'>
+          <h3>${item.className}</h3>
+          <div class='output-grid'>
+            <div><strong>Objektif</strong><br><pre>${item.objektif}</pre></div>
+            <div><strong>Kriteria Kejayaan</strong><br><pre>${item.kriteria}</pre></div>
+            <div><strong>Aktiviti</strong><br><pre>${item.aktiviti}</pre></div>
+          </div>
+        </div>
+      `).join('');
+
+      panel.classList.remove('hide');
+      $('generateInfo').textContent = `${state.generated.length} RPH dijana.`;
+    };
+
+    const fillRPH = async () => {
+      if (!state.generated.length) {
+        showStatus('Tidak ada data RPH untuk diisi.', 'error');
+        return;
+      }
+      if (!state.selectedDaySheet) {
+        showStatus('Pilih satu hari terlebih dahulu.', 'error');
+        return;
+      }
+
+      try {
+        const payload = {
+          action: 'appendRPH',
+          sheetId: state.sheetId,
+          sheetName: state.selectedDaySheet,
+          rows: state.generated
+        };
+
+        const resp = await apiPost(payload);
+        if (resp.status === 'ok') {
+          showStatus('RPH berjaya diisi: ' + resp.message, 'success');
+        } else {
+          throw new Error(resp.message || 'Operasi gagal');
+        }
+      } catch (err) {
+        showStatus('Error tulis ke sheet: ' + err.message, 'error');
+      }
+    };
+
+    $('btnConnect').addEventListener('click', async () => {
+      const sheetUrl = $('sheetUrl').value.trim();
+      const sheetId = getSheetId(sheetUrl);
+      if (!sheetId) {
+        showStatus('URL spreadsheet tidak sah.', 'error');
+        return;
+      }
+      state.sheetId = sheetId;
+
+      try {
+        const data = await apiGet({ action:'listSheets', sheetId });
+        if (data.status !== 'ok') throw new Error(data.message || 'Gagal terima list');
+
+        const dayList = getDaySheetNames(data.sheets || []);
+        state.daySheets = dayList;
+        state.selectedDaySheet = null;
+        renderDayButtons();
+
+        $('dayPanel').classList.remove('hide');
+        $('classPanel').classList.add('hide');
+        $('actionPanel').classList.add('hide');
+        $('resultPanel').classList.add('hide');
+
+        showStatus(`Berjaya sambung. Ditemui ${dayList.length} sheet hari.` ,'success');
+      } catch (err) {
+        showStatus('Gagal sambung: ' + err.message, 'error');
+      }
+    });
+
+    // Load saved API key when page starts
+    loadSavedApiKey();
+
+    $('btnSaveApiKey').addEventListener('click', saveApiKey);
+    $('btnReload').addEventListener('click', async () => $('btnConnect').click());
+    $('btnGenerate').addEventListener('click', generateRPH);
+    $('btnFill').addEventListener('click', fillRPH);
+  </script>
 </body>
 </html>

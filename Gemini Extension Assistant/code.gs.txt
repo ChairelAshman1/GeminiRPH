@@ -525,6 +525,9 @@ function doGet(e) {
     case 'read':
       return handleReadRequest(e);
 
+    case 'listSheets':
+      return handleListSheets(e);
+
     case 'getApiKeys':
       return handleGetApiKeys(e);
 
@@ -551,6 +554,9 @@ function doPost(e) {
   var action = (data.action || '').toLowerCase();
   if (action === 'write') {
     return handleWriteRequest(data);
+  }
+  if (action === 'appendRPH') {
+    return handleAppendRPH(data);
   }
   if (action === 'saveApiKey') {
     return handleSaveApiKey(data);
@@ -678,6 +684,66 @@ function handleGetSchedule(e) {
 
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'ok', schedule: schedule }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleListSheets(e) {
+  var sheetId = e.parameter.sheetId || '';
+  if (!sheetId) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet ID diperlukan.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  try {
+    var ss = sheetId && sheetId.length > 10 ? SpreadsheetApp.openById(sheetId) : SpreadsheetApp.getActiveSpreadsheet();
+    var sheetNames = ss.getSheets().map(function(s) { return s.getName(); });
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', sheets: sheetNames }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleAppendRPH(data) {
+  var sheetId = data.sheetId || '';
+  var sheetName = data.sheetName || 'RPH_OUTPUT';
+  var rows = data.rows || [];
+
+  if (!sheetId) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet ID diperlukan.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Tiada data untuk ditambah.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  try {
+    var ss = sheetId && sheetId.length > 10 ? SpreadsheetApp.openById(sheetId) : SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.getRange('A1:D1').setValues([['Class', 'Objektif', 'Kriteria Kejayaan', 'Aktiviti']]);
+    }
+
+    rows.forEach(function(row) {
+      sheet.appendRow([row.className || '', row.objektif || '', row.kriteria || '', row.aktiviti || '']);
+    });
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', message: 'RPH disimpan dalam sheet ' + sheetName }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService
