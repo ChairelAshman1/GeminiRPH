@@ -34,8 +34,12 @@
 <body>
   <div class="container">
     <h1>Gemini RPH - Main</h1>
+    <div class="flex-right" style="margin-bottom:0.4rem;">
+      <button id="btnToggleConfig" class="small-btn" style="background:#f59e0b;">⚙️ Tunjuk/Sembunyikan Konfigurasi</button>
+    </div>
 
-    <label for="scriptUrl">Apps Script URL (Web App Exec):</label>
+    <div id="configPanel">
+      <label for="scriptUrl">Apps Script URL (Web App Exec):</label>
     <input id="scriptUrl" placeholder="https://script.google.com/macros/s/XXX/exec" value="" />
 
     <label for="apiKey">Google AI Studio API Keys (satu atau lebih):</label>
@@ -60,6 +64,7 @@
 
     <div id="status" class="msg">Sila masukkan URL dan sambung.</div>
 
+    </div>  <!-- end configPanel -->
     <div id="dayPanel" class="panel hide">
       <div><strong>Hari Ditemui:</strong></div>
       <div id="dayButtons"></div>
@@ -259,6 +264,15 @@
       showStatus('Tetapan disimpan (Web App + Spreadsheet).', 'success');
     };
 
+    const toggleConfig = () => {
+      const panel = $('configPanel');
+      if (panel.classList.contains('hide')) {
+        panel.classList.remove('hide');
+      } else {
+        panel.classList.add('hide');
+      }
+    };
+
     async function apiGet(params) {
       const base = getApiUrl(); if (!base) throw new Error('Tiada URL');
       const query = new URLSearchParams(params).toString();
@@ -291,44 +305,49 @@
           if (!cell) continue;
           const match = cell.match(keywordRe);
           if (match) {
-            const className = (match[2] || (row[c+1] || '').toString().trim() || '').trim() || ('Class ' + (classes.length + 1));
+            let className = (match[2] || (row[c+1] || '').toString().trim() || '').trim();
+            const nextValue = (row[c+1] || '').toString().trim();
+            if (/^\d+$/.test(className) && nextValue) {
+              className = nextValue;
+            }
+            className = className || ('Class ' + (classes.length + 1));
             if (!className) continue;
             if (classes.some(x => x.name === className)) break;
 
-            let bidang = '';
-            let tema = '';
-            let tajuk = '';
-            let sk = '';
-            let sp = '';
+            const bidangArr = [];
+            const temaArr = [];
+            const tajukArr = [];
+            const skArr = [];
+            const spArr = [];
 
             for (let rr = r + 1; rr < Math.min(r + 18, values.length); rr++) {
               const below = values[rr];
               for (let cc = 0; cc < below.length; cc++) {
                 const txt = (below[cc] || '').toString().trim().toLowerCase();
-                const nextCell = (below[cc+1] || '').toString().trim();
+                const nextCell = (below[cc + 1] || '').toString().trim();
                 if (!txt) continue;
-                if (txt.includes('bidang')) bidang = nextCell || bidang;
-                if (txt.includes('tema')) tema = nextCell || tema;
-                if (txt.includes('tajuk')) tajuk = nextCell || tajuk;
-                if (txt.includes('standard kandungan')) sk = nextCell || sk;
-                if (txt.includes('standard pembelajaran')) sp = nextCell || sp;
+                if (txt.includes('bidang') && nextCell) bidangArr.push(nextCell);
+                if (txt.includes('tema') && nextCell) temaArr.push(nextCell);
+                if (txt.includes('tajuk') && nextCell) tajukArr.push(nextCell);
+                if (txt.includes('standard kandungan') && nextCell) skArr.push(nextCell);
+                if (txt.includes('standard pembelajaran') && nextCell) spArr.push(nextCell);
               }
             }
 
             classes.push({
               id: classes.length,
               name: className,
-              bidang: bidang,
-              tema: tema,
-              tajuk: tajuk,
-              sk: sk,
-              sp: sp
+              bidang: bidangArr.filter(Boolean).join(' | '),
+              tema: temaArr.filter(Boolean).join(' | '),
+              tajuk: tajukArr.filter(Boolean).join(' | '),
+              sk: skArr.filter(Boolean).join(' | '),
+              sp: spArr.filter(Boolean).join(' | ')
             });
             break;
           }
         }
       }
-      return classes;
+      return classes.filter(c => c.name && c.name.trim());
     };
 
     const renderDayButtons = () => {
@@ -367,6 +386,8 @@
         }
 
         renderClassList();
+        // hide configuration once class data is linked
+        $('configPanel').classList.add('hide');
 
       } catch (err) {
         showStatus('Error baca kelas: ' + err.message, 'error');
@@ -656,6 +677,7 @@ Format jawapan: JSON array objek dengan medan className, objektif, kriteria, akt
     $('btnSaveApiKey').addEventListener('click', addApiKey);
     $('btnReload').addEventListener('click', async () => $('btnConnect').click());
     $('btnSaveConfig').addEventListener('click', saveSettings);
+    $('btnToggleConfig').addEventListener('click', toggleConfig);
     $('btnGenerate').addEventListener('click', generateRPH);
     $('btnFill').addEventListener('click', fillRPH);
   </script>
