@@ -515,7 +515,11 @@ function RPT_20() {
  * Web App API helpers for website integration
  */
 function doGet(e) {
-  var action = (e.parameter.action || 'ping').toLowerCase();
+  var action = (e.parameter.action || '').toLowerCase();
+  if (!action && e.parameter.sheetId) {
+    action = 'listsheets';
+  }
+
   switch(action) {
     case 'ping':
       return ContentService
@@ -525,29 +529,18 @@ function doGet(e) {
     case 'read':
       return handleReadRequest(e);
 
-    case 'listSheets':
+    case 'listsheets':
       return handleListSheets(e);
 
-    case 'getApiKeys':
+    case 'getapikeys':
       return handleGetApiKeys(e);
 
-    case 'getSchedule':
+    case 'getschedule':
       return handleGetSchedule(e);
-
-    case '':
-      // fallback path: if sheetId is provided, return sheet names
-      if (e.parameter.sheetId) {
-        return handleListSheets(e);
-      }
-      // else keep ping behavior
-      return ContentService
-          .createTextOutput(JSON.stringify({ status: 'ok', message: 'alive' }))
-          .setMimeType(ContentService.MimeType.JSON);
 
     default:
       return ContentService
-          .createTextOutput(JSON.stringify({ status: 'error', message: 'Unsupported action' }))
-          .setMimeType(ContentService.MimeType.JSON);
+          .createTextOutput(JSON.stringify({ status: 'error', message: 'Unsupported action: ' + action }));
   }
 }
 

@@ -183,8 +183,17 @@
 
     const getSheetId = (url) => {
       try {
-        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-        return match ? match[1] : '';
+        if (!url) return '';
+        const trimmed = url.trim();
+        // new style URL
+        let match = trimmed.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) return match[1];
+        // fallback for ?id=...
+        match = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+        if (match) return match[1];
+        // accept raw id
+        if (/^[a-zA-Z0-9-_]{10,}$/.test(trimmed)) return trimmed;
+        return '';
       } catch (e) { return ''; }
     };
 
@@ -495,18 +504,27 @@
     };
 
     $('btnConnect').addEventListener('click', async () => {
+      const scriptUrl = $('scriptUrl').value.trim();
+      if (!scriptUrl) {
+        showStatus('Sila masukkan Apps Script URL (Web App).', 'error');
+        return;
+      }
+
       const sheetUrl = $('sheetUrl').value.trim();
       const sheetId = getSheetId(sheetUrl);
       if (!sheetId) {
-        showStatus('URL spreadsheet tidak sah.', 'error');
+        showStatus('URL spreadsheet tidak sah. Pastikan anda menyalin URL lengkap atau ID sahaja.', 'error');
         return;
       }
       state.sheetId = sheetId;
+      saveSheetUrl(sheetUrl);
 
       setLoading(true, 'Menyambung ke spreadsheet...');
       try {
         const data = await apiGet({ action:'listSheets', sheetId });
-        if (data.status !== 'ok') throw new Error(data.message || 'Gagal terima list');
+        if (!data || data.status !== 'ok') {
+          throw new Error(data ? (data.message || 'Gagal terima list') : 'Tiada respons');
+        }
 
         const dayList = getDaySheetNames(data.sheets || []);
         state.daySheets = dayList;
@@ -520,11 +538,14 @@
 
         showStatus(`Berjaya sambung. Ditemui ${dayList.length} sheet hari.` ,'success');
       } catch (err) {
-        showStatus('Gagal sambung: ' + err.message, 'error');
+        let message = err.message || err.toString();
+        message += ' (Pastikan Web App telah dideploy dan akses spreadsheet berkongsi dengan owner Apps Script)';
+        showStatus('Gagal sambung: ' + message, 'error');
       } finally {
         setLoading(false);
       }
     });
+
 
     // Load saved settings and API key list on startup
     loadSettings();
