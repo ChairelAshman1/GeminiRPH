@@ -525,6 +525,12 @@ function doGet(e) {
     case 'read':
       return handleReadRequest(e);
 
+    case 'getApiKeys':
+      return handleGetApiKeys(e);
+
+    case 'getSchedule':
+      return handleGetSchedule(e);
+
     default:
       return ContentService
           .createTextOutput(JSON.stringify({ status: 'error', message: 'Unsupported action' }))
@@ -545,6 +551,9 @@ function doPost(e) {
   var action = (data.action || '').toLowerCase();
   if (action === 'write') {
     return handleWriteRequest(data);
+  }
+  if (action === 'saveApiKey') {
+    return handleSaveApiKey(data);
   }
 
   return ContentService
@@ -568,6 +577,113 @@ function handleReadRequest(e) {
   return ContentService
       .createTextOutput(JSON.stringify({ status: 'ok', values: values }))
       .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleGetApiKeys(e) {
+  var sheetId = e.parameter.sheetId || '';
+  var sheet = getSheetInstance(sheetId, 'API_KEYS');
+  if (!sheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', keys: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  try {
+    var values = sheet.getDataRange().getValues();
+    var keys = [];
+    for (var i = 1; i < values.length; i++) {
+      var row = values[i];
+      if (row[0]) keys.push({ key: row[0], created: row[1] || '' });
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', keys: keys }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleSaveApiKey(data) {
+  var sheetId = data.sheetId || '';
+  var key = (data.key || '').trim();
+  if (!key) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'API Key kosong.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var ss = sheetId && sheetId.length > 10 ? SpreadsheetApp.openById(sheetId) : SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('API_KEYS');
+  if (!sheet) {
+    sheet = ss.insertSheet('API_KEYS');
+    sheet.getRange('A1:B1').setValues([['key','created']]);
+  }
+
+  // Avoid duplicate
+  var dataRange = sheet.getDataRange().getValues();
+  for (var i = 1; i < dataRange.length; i++) {
+    if (dataRange[i][0] === key) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'ok', message: 'Key sudah wujud.' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  sheet.appendRow([key, new Date().toISOString()]);
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', message: 'Key disimpan.' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleGetSchedule(e) {
+  var sheetId = e.parameter.sheetId || '';
+  var sheetName = e.parameter.sheetName || 'Jadual';
+  var sheet = getSheetInstance(sheetId, sheetName);
+  if (!sheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet jadual tidak ditemui.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  try {
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'ok', schedule: [] }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var headers = data[0].map(function(h) { return (h || '').toString().toLowerCase(); });
+    var dayIndex = headers.indexOf('day');
+    var classIndex = headers.indexOf('class');
+    var temaIndex = headers.indexOf('tema');
+    var tajukIndex = headers.indexOf('tajuk');
+    var skIndex = headers.indexOf('sk');
+    var spIndex = headers.indexOf('sp');
+
+    var schedule = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (!row[dayIndex]) continue;
+      schedule.push({
+        day: row[dayIndex],
+        className: row[classIndex] || '',
+        tema: row[temaIndex] || '',
+        tajuk: row[tajukIndex] || '',
+        sk: row[skIndex] || '',
+        sp: row[spIndex] || ''
+      });
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', schedule: schedule }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function handleWriteRequest(data) {

@@ -15,6 +15,49 @@ const DB_VERSION = 3;
 // Auto-Gen Timer
 let autoGenTimer = null;
 let currentAbortController = null; // Control cancellation
+let scheduleCache = []; // Loaded schedule entries from Google Sheet
+
+function getSheetAppScriptUrl() {
+    return $('sheetAppScriptUrl')?.value.trim();
+}
+
+function getSheetId() {
+    return $('sheetIdInput')?.value.trim();
+}
+
+function getSheetName() {
+    return $('sheetNameInput')?.value.trim() || 'Sheet1';
+}
+
+function getSheetRange() {
+    return $('sheetRangeInput')?.value.trim() || 'A2';
+}
+
+function setSheetStatus(message, isSuccess = true) {
+    const status = $('sheetStatus');
+    if (!status) return;
+    status.textContent = `Status: ${message}`;
+    status.style.color = isSuccess ? '#86efac' : '#fca5a5';
+}
+
+function saveSheetSettings() {
+    localStorage.setItem('SHEET_WEBAPP_URL', getSheetAppScriptUrl() || '');
+    localStorage.setItem('SHEET_ID', getSheetId() || '');
+    localStorage.setItem('SHEET_NAME', getSheetName());
+    localStorage.setItem('SHEET_RANGE', getSheetRange());
+}
+
+function loadSheetSettings() {
+    const url = localStorage.getItem('SHEET_WEBAPP_URL') || '';
+    const sheetId = localStorage.getItem('SHEET_ID') || '';
+    const name = localStorage.getItem('SHEET_NAME') || 'Sheet1';
+    const range = localStorage.getItem('SHEET_RANGE') || 'A2';
+    if ($('sheetAppScriptUrl')) $('sheetAppScriptUrl').value = url;
+    if ($('sheetIdInput')) $('sheetIdInput').value = sheetId;
+    if ($('sheetNameInput')) $('sheetNameInput').value = name;
+    if ($('sheetRangeInput')) $('sheetRangeInput').value = range;
+    if (url) setSheetStatus('URL disimpan. Sila sambung.', true);
+}
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', async () => {
@@ -163,6 +206,132 @@ function selectKey(key, resetUsage = true) {
     
     updateStatusUI();
     renderKeyList();
+}
+
+async function postJson(url, body) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    return response.json();
+}
+
+async function loadApiKeysFromSheet() {
+    const url = getSheetAppScriptUrl();
+    const sheetId = getSheetId();
+    if (!url) return setSheetStatus('Sila masukkan Apps Script URL.', false);
+
+    setSheetStatus('Memuatkan API Keys...', true);
+    try {
+        const query = `${url}?action=getApiKeys${sheetId ? '&sheetId=' + encodeURIComponent(sheetId) : ''}`;
+        const json = await fetch(query).then(r => r.json());
+        if (json.status === 'ok' && Array.isArray(json.keys)) {
+            API_KEYS_LIST = json.keys.map(item => item.key).filter(k => k);
+            renderKeyList();
+            setSheetStatus('API Keys dimuatkan dari Sheet.', true);
+        } else {
+            setSheetStatus('Tiada API Keys didapati.', false);
+        }
+    } catch (err) {
+        setSheetStatus('Fail muat API Keys: ' + err.message, false);
+    }
+}
+
+async function syncApiKeyToSheet() {
+    const url = getSheetAppScriptUrl();
+    const sheetId = getSheetId();
+    const keyToSave = API_KEY || $('apiKeyInput')?.value.trim();
+    if (!url) return setSheetStatus('Sila masukkan Apps Script URL.', false);
+    if (!keyToSave || keyToSave.length < 10) return setSheetStatus('Sila masukkan API Key sah.', false);
+
+    setSheetStatus('Menyimpan API Key ke Sheet...', true);
+    try {
+        const json = await postJson(url, {
+            action: 'saveApiKey',
+            sheetId: sheetId,
+            key: keyToSave,
+            label: 'auto'
+        });
+        if (json.status === 'ok') {
+            setSheetStatus('API Key disimpan ke Sheet.', true);
+            loadApiKeysFromSheet();
+        } else {
+            setSheetStatus('Gagal simpan key: ' + (json.message || 'unknown'), false);
+        }
+    } catch (err) {
+        setSheetStatus('Gagal simpan key: ' + err.message, false);
+    }
+}
+
+function renderDayButtonsForSchedule(schedule) {
+    const container = $('dayButtonsContainer');
+    container.innerHTML = '';
+    const days = [...new Set(schedule.map(i => i.day || 'Tidak Dikenal').filter(Boolean))];
+    if (!days.length) {
+        container.innerHTML = '<span style="color:#fca5a5;">Tiada hari dijumpai.</span>';
+        return;
+    }
+    days.forEach(day => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-secondary bg-purple';
+        btn.style.padding = '4px 8px';
+        btn.style.fontSize = '0.7rem';
+        btn.textContent = day;
+        btn.addEventListener('click', () => showClassesForDay(day));
+        container.appendChild(btn);
+    });
+}
+
+function showClassesForDay(day) {
+    const display = $('dayClassesDisplay');
+    const filtered = scheduleCache.filter(i => (i.day || '').toLowerCase() === day.toLowerCase());
+    if (!filtered.length) {
+        display.innerHTML = `<div style="color:#facc15;">Tiada kelas untuk ${day}</div>`;
+        return;
+    }
+    const rows = filtered.map(c => {
+        return `<div style="border-bottom:1px solid rgba(148,163,184,0.2); padding:0.4rem 0;">
+            <strong>${c.className || '-'} </strong> - Tema: ${c.tema || '-'}<br>
+            Tajuk: ${c.tajuk || '-'}<br>
+            SK: ${c.sk || '-'}<br>
+            SP: ${c.sp || '-'}
+        </div>`;
+    }).join('');
+    display.innerHTML = `<div style="color:#a5f3fc; font-weight:700; margin-bottom:0.4rem;">Kelas pada ${day} (${filtered.length})</div>${rows}`;
+}
+
+async function loadScheduleFromSheet() {
+    const url = getSheetAppScriptUrl();
+    const sheetId = getSheetId();
+    const sheetName = $('scheduleSheetName')?.value.trim() || 'Jadual';
+    if (!url) return setSheetStatus('Sila masukkan Apps Script URL.', false);
+
+    setSheetStatus('Memuat jadual...', true);
+    try {
+        const query = `${url}?action=getSchedule&sheetId=${encodeURIComponent(sheetId)}&sheetName=${encodeURIComponent(sheetName)}`;
+        const json = await fetch(query).then(r => r.json());
+        if (json.status === 'ok' && Array.isArray(json.schedule)) {
+            scheduleCache = json.schedule;
+            renderDayButtonsForSchedule(scheduleCache);
+            setSheetStatus('Jadual dimuatkan.', true);
+            $('dayClassesDisplay').innerHTML = '<div style="color:#94a3b8;">Pilih hari untuk lihat butiran kelas.</div>';
+        } else {
+            scheduleCache = [];
+            $('dayButtonsContainer').innerHTML = '';
+            $('dayClassesDisplay').innerHTML = '';
+            setSheetStatus('Tiada jadual ditemui.', false);
+        }
+    } catch (err) {
+        setSheetStatus('Gagal muat jadual: ' + err.message, false);
+    }
+}
+
+function clearSchedule() {
+    scheduleCache = [];
+    $('dayButtonsContainer').innerHTML = '';
+    $('dayClassesDisplay').innerHTML = '';
+    setSheetStatus('Jadual dikosongkan.', true);
 }
 
 function renderKeyList() {
@@ -323,6 +492,14 @@ function attachListeners() {
     // Help Button
     $('btnShowHelp').addEventListener('click', () => $('helpModal').classList.add('show'));
     $('btnCloseHelp').addEventListener('click', () => $('helpModal').classList.remove('show'));
+
+    // API Key remote sync buttons
+    $('btnSyncApiKey').addEventListener('click', syncApiKeyToSheet);
+    $('btnLoadApiKeys').addEventListener('click', loadApiKeysFromSheet);
+
+    // Schedule buttons
+    $('btnLoadSchedule').addEventListener('click', loadScheduleFromSheet);
+    $('btnClearSchedule').addEventListener('click', clearSchedule);
     
     // Mode Selection Logic
     $('statusBadge').addEventListener('click', () => {
@@ -575,49 +752,7 @@ function attachListeners() {
     $('btnExportHelp').addEventListener('click', () => $('exportHelpModal').classList.add('show'));
     $('btnCloseExportHelp').addEventListener('click', () => $('exportHelpModal').classList.remove('show'));
 
-    // Google Sheet / Apps Script Integration
-    function getSheetAppScriptUrl() {
-        return $('sheetAppScriptUrl')?.value.trim();
-    }
-
-    function getSheetId() {
-        return $('sheetIdInput')?.value.trim();
-    }
-
-    function getSheetName() {
-        return $('sheetNameInput')?.value.trim() || 'Sheet1';
-    }
-
-    function getSheetRange() {
-        return $('sheetRangeInput')?.value.trim() || 'A2';
-    }
-
-    function setSheetStatus(message, isSuccess = true) {
-        const status = $('sheetStatus');
-        if (!status) return;
-        status.textContent = `Status: ${message}`;
-        status.style.color = isSuccess ? '#86efac' : '#fca5a5';
-    }
-
-    function saveSheetSettings() {
-        localStorage.setItem('SHEET_WEBAPP_URL', getSheetAppScriptUrl() || '');
-        localStorage.setItem('SHEET_ID', getSheetId() || '');
-        localStorage.setItem('SHEET_NAME', getSheetName());
-        localStorage.setItem('SHEET_RANGE', getSheetRange());
-    }
-
-    function loadSheetSettings() {
-        const url = localStorage.getItem('SHEET_WEBAPP_URL') || '';
-        const sheetId = localStorage.getItem('SHEET_ID') || '';
-        const name = localStorage.getItem('SHEET_NAME') || 'Sheet1';
-        const range = localStorage.getItem('SHEET_RANGE') || 'A2';
-        if ($('sheetAppScriptUrl')) $('sheetAppScriptUrl').value = url;
-        if ($('sheetIdInput')) $('sheetIdInput').value = sheetId;
-        if ($('sheetNameInput')) $('sheetNameInput').value = name;
-        if ($('sheetRangeInput')) $('sheetRangeInput').value = range;
-        if (url) setSheetStatus('URL disimpan. Sila sambung.', true);
-    }
-
+    // Google Sheet / Apps Script Integration can now use global helper functions
     async function connectSheet() {
         const url = getSheetAppScriptUrl();
         if (!url) {
