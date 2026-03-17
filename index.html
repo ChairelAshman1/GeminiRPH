@@ -93,7 +93,9 @@
       selectedDaySheet: null,
       daySheets: [],
       classItems: [],
-    selectedClassId: null,
+      selectedClassId: null,
+      generated: []
+    };
 
     const $ = id => document.getElementById(id);
 
@@ -133,6 +135,7 @@
         btn.addEventListener('click', () => {
           selectedApiKey = btn.dataset.key;
           $('apiKey').value = selectedApiKey;
+          localStorage.setItem('gemini_rph_last_key', selectedApiKey);
           renderApiKeyList();
           showStatus('API Key dipilih: ' + (btn.textContent || '').toString(), 'success');
         });
@@ -169,6 +172,7 @@
       keys.push(key);
       persistApiKeys(keys);
       selectedApiKey = key;
+      localStorage.setItem('gemini_rph_last_key', key);
       renderApiKeyList();
       showStatus('Key ditambah. Pilih satu untuk digunakan.', 'success');
     };
